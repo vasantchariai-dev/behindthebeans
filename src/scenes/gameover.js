@@ -24,8 +24,8 @@ export class GameOverScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#2D3142');
 
     // Game over title
-    this.add.text(width / 2, 20, 'GAME OVER', {
-      fontSize: '14px',
+    this.add.text(width / 2, 50, 'GAME OVER', {
+      fontSize: '36px',
       fontFamily: 'monospace',
       color: '#E63946',
       fontStyle: 'bold',
@@ -37,29 +37,29 @@ export class GameOverScene extends Phaser.Scene {
       caffeine: 'You collapsed from exhaustion.',
     };
 
-    this.add.text(width / 2, 38, reasons[this.reason] || reasons.stress, {
-      fontSize: '6px',
+    this.add.text(width / 2, 95, reasons[this.reason] || reasons.stress, {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
     }).setOrigin(0.5);
 
     // Days survived
     const daysText = this.finalLevel === 1 ? '1 day' : `${this.finalLevel} days`;
-    this.add.text(width / 2, 50, `You survived ${daysText} on set.`, {
-      fontSize: '5px',
+    this.add.text(width / 2, 120, `You survived ${daysText} on set.`, {
+      fontSize: '12px',
       fontFamily: 'monospace',
       color: '#E8E8E8',
     }).setOrigin(0.5);
 
     // Score display
-    this.add.text(width / 2, 68, 'SCORE', {
-      fontSize: '6px',
+    this.add.text(width / 2, 160, 'SCORE', {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#8B4513',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 80, this.finalScore.toString().padStart(5, '0'), {
-      fontSize: '14px',
+    this.add.text(width / 2, 195, this.finalScore.toString().padStart(5, '0'), {
+      fontSize: '42px',
       fontFamily: 'monospace',
       color: '#EF8354',
       fontStyle: 'bold',
@@ -68,10 +68,11 @@ export class GameOverScene extends Phaser.Scene {
     // High score check
     const highScore = parseInt(localStorage.getItem('behindTheBeans_highScore') || '0');
     if (this.finalScore >= highScore && this.finalScore > 0) {
-      this.add.text(width / 2, 93, 'NEW HIGH SCORE!', {
-        fontSize: '6px',
+      this.add.text(width / 2, 235, 'NEW HIGH SCORE!', {
+        fontSize: '16px',
         fontFamily: 'monospace',
         color: '#4ECDC4',
+        fontStyle: 'bold',
       }).setOrigin(0.5);
 
       // Celebration effect
@@ -79,8 +80,8 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     // Play again button
-    this.playAgainBtn = this.add.text(width / 2, 110, '[ PLAY AGAIN ]', {
-      fontSize: '8px',
+    this.playAgainBtn = this.add.text(width / 2, 280, '[ PLAY AGAIN ]', {
+      fontSize: '20px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
     }).setOrigin(0.5).setInteractive();
@@ -107,17 +108,21 @@ export class GameOverScene extends Phaser.Scene {
     });
 
     // Credits
-    this.add.text(width / 2, 130, 'Made by Halfway Up Productions', {
-      fontSize: '4px',
+    this.add.text(width / 2, 325, 'Made by Halfway Up Productions', {
+      fontSize: '11px',
       fontFamily: 'monospace',
       color: '#E8E8E8',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 138, 'halfwayup.co.uk', {
-      fontSize: '4px',
+    const link = this.add.text(width / 2, 345, 'halfwayup.co.uk', {
+      fontSize: '11px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
-    }).setOrigin(0.5).setInteractive().on('pointerdown', () => {
+    }).setOrigin(0.5).setInteractive();
+
+    link.on('pointerover', () => link.setColor('#EF8354'));
+    link.on('pointerout', () => link.setColor('#4ECDC4'));
+    link.on('pointerdown', () => {
       window.open('https://www.halfwayup.co.uk/', '_blank');
     });
 
@@ -129,7 +134,7 @@ export class GameOverScene extends Phaser.Scene {
     this.time.delayedCall(500, () => {
       this.input.on('pointerdown', (pointer) => {
         // Only if not clicking the link
-        if (pointer.y < 125) {
+        if (pointer.y < 310) {
           this.restartGame();
         }
       });
@@ -142,22 +147,22 @@ export class GameOverScene extends Phaser.Scene {
   createConfetti() {
     const colours = [0xEF8354, 0x4ECDC4, 0xFFD700, 0xE63946, 0x8B4513];
 
-    for (let i = 0; i < 30; i++) {
+    for (let i = 0; i < 50; i++) {
       const confetti = this.add.graphics();
       const colour = colours[Math.floor(Math.random() * colours.length)];
       confetti.fillStyle(colour);
-      confetti.fillRect(0, 0, 2 + Math.random() * 2, 2 + Math.random() * 2);
+      confetti.fillRect(0, 0, 4 + Math.random() * 4, 4 + Math.random() * 4);
 
-      confetti.x = 20 + Math.random() * (this.cameras.main.width - 40);
-      confetti.y = -10 - Math.random() * 20;
+      confetti.x = 50 + Math.random() * (this.cameras.main.width - 100);
+      confetti.y = -20 - Math.random() * 40;
 
       this.tweens.add({
         targets: confetti,
-        y: this.cameras.main.height + 20,
-        x: confetti.x + (Math.random() - 0.5) * 40,
-        rotation: Math.random() * Math.PI * 4,
-        duration: 2000 + Math.random() * 1000,
-        delay: Math.random() * 500,
+        y: this.cameras.main.height + 40,
+        x: confetti.x + (Math.random() - 0.5) * 80,
+        rotation: Math.random() * Math.PI * 6,
+        duration: 2500 + Math.random() * 1500,
+        delay: Math.random() * 800,
         onComplete: () => confetti.destroy(),
       });
     }

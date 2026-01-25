@@ -16,9 +16,9 @@ const config = {
   type: Phaser.AUTO,
   parent: 'game-container',
 
-  // Native resolution - scaled up with crisp pixels
-  width: 256,
-  height: 144,
+  // Native resolution - higher res for sharper graphics
+  width: 640,
+  height: 360,
 
   // Scale settings for responsive display
   scale: {
