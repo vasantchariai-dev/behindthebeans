@@ -1,6 +1,7 @@
 /**
  * Game Over Scene
  * Displays final score and options to replay
+ * Vertical/portrait format for mobile
  */
 
 import Phaser from 'phaser';
@@ -13,7 +14,7 @@ export class GameOverScene extends Phaser.Scene {
   init(data) {
     this.finalScore = data.score || 0;
     this.finalLevel = data.level || 1;
-    this.reason = data.reason || 'stress';
+    this.reason = data.reason || 'missed';
   }
 
   create() {
@@ -24,7 +25,7 @@ export class GameOverScene extends Phaser.Scene {
     this.cameras.main.setBackgroundColor('#2D3142');
 
     // Game over title
-    this.add.text(width / 2, 50, 'GAME OVER', {
+    this.add.text(width / 2, 80, 'GAME OVER', {
       fontSize: '36px',
       fontFamily: 'monospace',
       color: '#E63946',
@@ -33,33 +34,35 @@ export class GameOverScene extends Phaser.Scene {
 
     // Reason text
     const reasons = {
-      stress: 'The director had a meltdown.',
-      caffeine: 'You collapsed from exhaustion.',
+      missed: 'The director lost their temper!\n(3 coffee orders missed)',
+      caffeine: 'You collapsed from exhaustion!\n(Energy depleted)',
+      stress: 'Too much stress on set!',
     };
 
-    this.add.text(width / 2, 95, reasons[this.reason] || reasons.stress, {
+    this.add.text(width / 2, 140, reasons[this.reason] || reasons.missed, {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
+      align: 'center',
     }).setOrigin(0.5);
 
     // Days survived
     const daysText = this.finalLevel === 1 ? '1 day' : `${this.finalLevel} days`;
-    this.add.text(width / 2, 120, `You survived ${daysText} on set.`, {
-      fontSize: '12px',
+    this.add.text(width / 2, 190, `You survived ${daysText} on set.`, {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#E8E8E8',
     }).setOrigin(0.5);
 
     // Score display
-    this.add.text(width / 2, 160, 'SCORE', {
-      fontSize: '14px',
+    this.add.text(width / 2, 250, 'SCORE', {
+      fontSize: '16px',
       fontFamily: 'monospace',
       color: '#8B4513',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 195, this.finalScore.toString().padStart(5, '0'), {
-      fontSize: '42px',
+    this.add.text(width / 2, 300, this.finalScore.toString().padStart(5, '0'), {
+      fontSize: '48px',
       fontFamily: 'monospace',
       color: '#EF8354',
       fontStyle: 'bold',
@@ -68,8 +71,8 @@ export class GameOverScene extends Phaser.Scene {
     // High score check
     const highScore = parseInt(localStorage.getItem('behindTheBeans_highScore') || '0');
     if (this.finalScore >= highScore && this.finalScore > 0) {
-      this.add.text(width / 2, 235, 'NEW HIGH SCORE!', {
-        fontSize: '16px',
+      this.add.text(width / 2, 355, 'NEW HIGH SCORE!', {
+        fontSize: '18px',
         fontFamily: 'monospace',
         color: '#4ECDC4',
         fontStyle: 'bold',
@@ -80,8 +83,8 @@ export class GameOverScene extends Phaser.Scene {
     }
 
     // Play again button
-    this.playAgainBtn = this.add.text(width / 2, 280, '[ PLAY AGAIN ]', {
-      fontSize: '20px',
+    this.playAgainBtn = this.add.text(width / 2, 420, '[ PLAY AGAIN ]', {
+      fontSize: '22px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
     }).setOrigin(0.5).setInteractive();
@@ -107,15 +110,26 @@ export class GameOverScene extends Phaser.Scene {
       this.restartGame();
     });
 
+    // Menu button
+    this.menuBtn = this.add.text(width / 2, 470, '[ MAIN MENU ]', {
+      fontSize: '16px',
+      fontFamily: 'monospace',
+      color: '#8B4513',
+    }).setOrigin(0.5).setInteractive();
+
+    this.menuBtn.on('pointerover', () => this.menuBtn.setColor('#EF8354'));
+    this.menuBtn.on('pointerout', () => this.menuBtn.setColor('#8B4513'));
+    this.menuBtn.on('pointerdown', () => this.goToMenu());
+
     // Credits
-    this.add.text(width / 2, 325, 'Made by Halfway Up Productions', {
-      fontSize: '11px',
+    this.add.text(width / 2, 550, 'Made by Halfway Up Productions', {
+      fontSize: '12px',
       fontFamily: 'monospace',
       color: '#E8E8E8',
     }).setOrigin(0.5);
 
-    const link = this.add.text(width / 2, 345, 'halfwayup.co.uk', {
-      fontSize: '11px',
+    const link = this.add.text(width / 2, 575, 'halfwayup.co.uk', {
+      fontSize: '12px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
     }).setOrigin(0.5).setInteractive();
@@ -129,16 +143,6 @@ export class GameOverScene extends Phaser.Scene {
     // Keyboard input
     this.input.keyboard.on('keydown-SPACE', () => this.restartGame());
     this.input.keyboard.on('keydown-ENTER', () => this.restartGame());
-
-    // Also allow tap anywhere after a delay
-    this.time.delayedCall(500, () => {
-      this.input.on('pointerdown', (pointer) => {
-        // Only if not clicking the link
-        if (pointer.y < 310) {
-          this.restartGame();
-        }
-      });
-    });
   }
 
   /**
@@ -153,13 +157,13 @@ export class GameOverScene extends Phaser.Scene {
       confetti.fillStyle(colour);
       confetti.fillRect(0, 0, 4 + Math.random() * 4, 4 + Math.random() * 4);
 
-      confetti.x = 50 + Math.random() * (this.cameras.main.width - 100);
+      confetti.x = 30 + Math.random() * (this.cameras.main.width - 60);
       confetti.y = -20 - Math.random() * 40;
 
       this.tweens.add({
         targets: confetti,
         y: this.cameras.main.height + 40,
-        x: confetti.x + (Math.random() - 0.5) * 80,
+        x: confetti.x + (Math.random() - 0.5) * 60,
         rotation: Math.random() * Math.PI * 6,
         duration: 2500 + Math.random() * 1500,
         delay: Math.random() * 800,
@@ -169,15 +173,24 @@ export class GameOverScene extends Phaser.Scene {
   }
 
   /**
-   * Restart the game
+   * Go to main menu
    */
-  restartGame() {
-    // Play click sound
+  goToMenu() {
     this.playClickSound();
-
     this.cameras.main.fadeOut(300, 45, 49, 66);
     this.cameras.main.once('camerafadeoutcomplete', () => {
       this.scene.start('MenuScene');
+    });
+  }
+
+  /**
+   * Restart the game directly
+   */
+  restartGame() {
+    this.playClickSound();
+    this.cameras.main.fadeOut(300, 45, 49, 66);
+    this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.scene.start('PlayScene');
     });
   }
 

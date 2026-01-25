@@ -1,6 +1,7 @@
 /**
  * Menu Scene
  * Title screen with game branding and instructions
+ * Vertical/portrait format for mobile
  */
 
 import Phaser from 'phaser';
@@ -18,28 +19,28 @@ export class MenuScene extends Phaser.Scene {
 
     // Title text
     this.add.text(width / 2, 50, 'BEHIND THE BEANS', {
-      fontSize: '32px',
+      fontSize: '28px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
     // Subtitle
-    this.add.text(width / 2, 80, 'A film set survival game', {
+    this.add.text(width / 2, 85, 'A film set survival game', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
     }).setOrigin(0.5);
 
     // Coffee cup graphic
-    this.drawCoffeeCup(width / 2, 120);
+    this.drawCoffeeCup(width / 2, 140);
 
     // Instructions box
-    this.drawInstructions(width / 2, 200);
+    this.drawInstructions(width / 2, 300);
 
     // Tap to start text (pulsing)
-    this.startText = this.add.text(width / 2, 300, '[ CLICK OR TAP TO START ]', {
-      fontSize: '18px',
+    this.startText = this.add.text(width / 2, 520, '[ TAP TO START ]', {
+      fontSize: '20px',
       fontFamily: 'monospace',
       color: '#EF8354',
     }).setOrigin(0.5);
@@ -54,13 +55,13 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Credits
-    this.add.text(width / 2, 335, 'A Halfway Up Productions game', {
+    this.add.text(width / 2, 580, 'A Halfway Up Productions game', {
       fontSize: '12px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 350, 'halfwayup.co.uk', {
+    this.add.text(width / 2, 600, 'halfwayup.co.uk', {
       fontSize: '11px',
       fontFamily: 'monospace',
       color: '#E8E8E8',
@@ -86,67 +87,76 @@ export class MenuScene extends Phaser.Scene {
   }
 
   /**
-   * Draw instructions panel
+   * Draw instructions panel - BIGGER and CLEARER
    */
   drawInstructions(x, y) {
     // Background box
     const g = this.add.graphics();
-    g.fillStyle(0x1A1A1A, 0.6);
-    g.fillRoundedRect(x - 200, y - 45, 400, 90, 8);
-    g.lineStyle(2, 0x4ECDC4, 0.5);
-    g.strokeRoundedRect(x - 200, y - 45, 400, 90, 8);
+    g.fillStyle(0x1A1A1A, 0.8);
+    g.fillRoundedRect(x - 165, y - 100, 330, 200, 10);
+    g.lineStyle(3, 0x4ECDC4, 0.7);
+    g.strokeRoundedRect(x - 165, y - 100, 330, 200, 10);
 
     // Title
-    this.add.text(x, y - 35, 'HOW TO PLAY', {
-      fontSize: '14px',
+    this.add.text(x, y - 80, 'HOW TO PLAY', {
+      fontSize: '18px',
       fontFamily: 'monospace',
       color: '#EF8354',
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    // Instructions in columns
-    const leftX = x - 180;
-    const rightX = x + 20;
-    const lineHeight = 18;
-    const startY = y - 12;
+    // Instructions - stacked vertically, bigger text
+    const lineHeight = 28;
+    const startY = y - 45;
 
-    // Left column
-    this.add.text(leftX, startY, '☕ Fetch coffees from the van', {
-      fontSize: '11px',
-      fontFamily: 'monospace',
-      color: '#FAF7F2',
-    });
-
-    this.add.text(leftX, startY + lineHeight, '🚫 Stop crew crossing the set', {
-      fontSize: '11px',
-      fontFamily: 'monospace',
-      color: '#FAF7F2',
-    });
-
-    this.add.text(leftX, startY + lineHeight * 2, '🚽 Guide actors to the loo', {
-      fontSize: '11px',
-      fontFamily: 'monospace',
-      color: '#FAF7F2',
-    });
-
-    // Right column - controls
-    this.add.text(rightX, startY, 'WASD / Arrows = Move', {
-      fontSize: '11px',
+    // Coffee task
+    this.add.text(x, startY, '☕ COFFEES', {
+      fontSize: '16px',
       fontFamily: 'monospace',
       color: '#8B4513',
-    });
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
 
-    this.add.text(rightX, startY + lineHeight, 'Click/Tap = Select & Stop', {
-      fontSize: '11px',
+    this.add.text(x, startY + 18, 'Tap van, pick the right drink, deliver!', {
+      fontSize: '12px',
       fontFamily: 'monospace',
-      color: '#8B4513',
-    });
+      color: '#FAF7F2',
+    }).setOrigin(0.5);
 
-    this.add.text(rightX, startY + lineHeight * 2, 'Take breaks to stay awake!', {
-      fontSize: '11px',
+    // Crew task
+    this.add.text(x, startY + lineHeight * 1.5, '🚫 CREW', {
+      fontSize: '16px',
+      fontFamily: 'monospace',
+      color: '#E63946',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.add.text(x, startY + lineHeight * 1.5 + 18, 'Tap to stop them BEFORE they hit the set!', {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#FAF7F2',
+    }).setOrigin(0.5);
+
+    // Actor task
+    this.add.text(x, startY + lineHeight * 3, '🚽 ACTORS', {
+      fontSize: '16px',
+      fontFamily: 'monospace',
+      color: '#9C27B0',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
+    this.add.text(x, startY + lineHeight * 3 + 18, 'Draw a path to the loo - avoid the set!', {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#FAF7F2',
+    }).setOrigin(0.5);
+
+    // Controls
+    this.add.text(x, startY + lineHeight * 4.5, 'Move: WASD / Arrows / Tap', {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
-    });
+    }).setOrigin(0.5);
   }
 
   /**
@@ -154,7 +164,7 @@ export class MenuScene extends Phaser.Scene {
    */
   drawCoffeeCup(x, y) {
     const g = this.add.graphics();
-    const scale = 2;
+    const scale = 2.5;
 
     // Cup body
     g.fillStyle(0xFFFFFF);
@@ -204,13 +214,13 @@ export class MenuScene extends Phaser.Scene {
    * Create floating coffee beans in background
    */
   createFloatingBeans() {
-    for (let i = 0; i < 8; i++) {
+    for (let i = 0; i < 6; i++) {
       const bean = this.add.graphics();
       bean.fillStyle(0x5C4033, 0.2);
       bean.fillEllipse(0, 0, 15, 10);
 
-      bean.x = 40 + i * 80;
-      bean.y = 50 + Math.random() * 280;
+      bean.x = 40 + (i % 3) * 120;
+      bean.y = 50 + Math.floor(i / 3) * 300 + Math.random() * 200;
 
       this.tweens.add({
         targets: bean,
