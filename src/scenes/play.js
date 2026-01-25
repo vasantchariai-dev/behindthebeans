@@ -16,10 +16,6 @@ const COFFEE_NAMES = {
 };
 const CREW_TYPES = ['rigger', 'spark', 'runner-crew'];
 
-// Sprite scale factor (sprites are 16x16, we want them ~40x40)
-const SPRITE_SCALE = 2.5;
-const VAN_SCALE = 3;
-
 // Director phrases
 const DIRECTOR_PHRASES = [
   "That's a wrap on the martini!",
@@ -249,8 +245,7 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5).setAlpha(0.7);
 
     // Camera
-    this.add.image(this.hotSetBounds.x + 25, this.hotSetBounds.y + 25, 'camera')
-      .setScale(SPRITE_SCALE);
+    this.add.image(this.hotSetBounds.x + 30, this.hotSetBounds.y + 30, 'camera');
   }
 
   /**
@@ -258,10 +253,9 @@ export class PlayScene extends Phaser.Scene {
    */
   createLocations() {
     // Coffee van (bottom area)
-    this.coffeeVan = this.add.image(this.gameWidth / 2, this.gameHeight - 50, 'coffee-van')
-      .setScale(VAN_SCALE);
+    this.coffeeVan = this.add.image(this.gameWidth / 2, this.gameHeight - 45, 'coffee-van');
     this.coffeeVanZone = new Phaser.Geom.Rectangle(
-      this.gameWidth / 2 - 50, this.gameHeight - 90, 100, 80
+      this.gameWidth / 2 - 60, this.gameHeight - 85, 120, 80
     );
 
     // Make coffee van interactive
@@ -269,21 +263,18 @@ export class PlayScene extends Phaser.Scene {
     this.coffeeVan.on('pointerdown', () => this.onCoffeeVanClick());
 
     // Toilet (right side)
-    this.toilet = this.add.image(this.gameWidth - 50, 150, 'toilet')
-      .setScale(SPRITE_SCALE);
+    this.toilet = this.add.image(this.gameWidth - 40, 140, 'toilet');
     this.toiletZone = new Phaser.Geom.Rectangle(
-      this.gameWidth - 70, 130, 40, 40
+      this.gameWidth - 60, 115, 45, 55
     );
 
     // Director (top area)
-    this.director = this.add.image(200, 70, 'director')
-      .setScale(SPRITE_SCALE);
-    this.directorZone = new Phaser.Geom.Rectangle(180, 50, 40, 40);
+    this.director = this.add.image(200, 75, 'director');
+    this.directorZone = new Phaser.Geom.Rectangle(184, 59, 32, 32);
 
     // 1st AD (left side)
-    this.firstAD = this.add.image(80, 90, 'first-ad')
-      .setScale(SPRITE_SCALE);
-    this.firstADZone = new Phaser.Geom.Rectangle(60, 70, 40, 40);
+    this.firstAD = this.add.image(80, 95, 'first-ad');
+    this.firstADZone = new Phaser.Geom.Rectangle(64, 79, 32, 32);
 
     // Speech bubbles (hidden initially)
     this.directorBubble = this.createSpeechBubble(200, 35);
@@ -313,7 +304,7 @@ export class PlayScene extends Phaser.Scene {
     container.add(text);
 
     // Icon placeholder
-    const icon = this.add.image(0, -6, 'cup-flat-white').setScale(2);
+    const icon = this.add.image(0, -6, 'cup-flat-white');
     icon.setVisible(false);
     container.add(icon);
 
@@ -329,8 +320,7 @@ export class PlayScene extends Phaser.Scene {
    */
   createPlayer() {
     // Starting position (near coffee van)
-    this.player = this.physics.add.image(this.gameWidth / 2, this.gameHeight - 130, 'player-idle')
-      .setScale(SPRITE_SCALE);
+    this.player = this.physics.add.image(this.gameWidth / 2, this.gameHeight - 120, 'player-idle');
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(10);
 
@@ -387,7 +377,7 @@ export class PlayScene extends Phaser.Scene {
       fontFamily: 'monospace',
       color: '#E8E8E8',
     });
-    this.stressFace = this.add.image(this.gameWidth - 25, hudY + 8, 'face-happy').setScale(1.5);
+    this.stressFace = this.add.image(this.gameWidth - 20, hudY + 12, 'face-happy');
 
     // Energy bar
     this.add.text(this.gameWidth - 180, hudY + 18, 'ENERGY', {
@@ -620,10 +610,10 @@ export class PlayScene extends Phaser.Scene {
     options.forEach((type, i) => {
       const cup = this.add.image(startX + i * spacing, 8, `cup-${type}`);
       cup.setInteractive();
-      cup.setScale(3);
+      cup.setScale(1.5);
 
-      cup.on('pointerover', () => cup.setScale(4));
-      cup.on('pointerout', () => cup.setScale(3));
+      cup.on('pointerover', () => cup.setScale(2));
+      cup.on('pointerout', () => cup.setScale(1.5));
       cup.on('pointerdown', () => this.selectDrink(type));
 
       this.drinkMenu.add(cup);
@@ -751,7 +741,7 @@ export class PlayScene extends Phaser.Scene {
     // Y position within hot set area
     const y = this.hotSetBounds.y + 20 + Math.random() * (this.hotSetBounds.height - 40);
 
-    const crew = this.physics.add.image(startX, y, type).setScale(SPRITE_SCALE);
+    const crew = this.physics.add.image(startX, y, type);
     crew.setDepth(5);
     crew.crewType = type;
     crew.isEasterEgg = isEasterEgg;
@@ -974,8 +964,7 @@ export class PlayScene extends Phaser.Scene {
     const startX = 70;
     const startY = this.hotSetBounds.centerY;
 
-    this.activeActor = this.physics.add.image(startX, startY, 'actor-desperate')
-      .setScale(SPRITE_SCALE);
+    this.activeActor = this.physics.add.image(startX, startY, 'actor-desperate');
     this.activeActor.setDepth(6);
 
     // Show need loo icon
