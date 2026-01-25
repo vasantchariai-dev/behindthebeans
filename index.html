@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description" content="Behind the Beans - A retro arcade game by Halfway Up Productions">
+  <meta name="theme-color" content="#2D3142">
+  <title>Behind the Beans | Halfway Up Productions</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #2D3142;
+      /* Prevent text selection on mobile */
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      /* Prevent pull-to-refresh on mobile */
+      overscroll-behavior: none;
+    }
+
+    #game-container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    canvas {
+      /* Crisp pixels - no smoothing */
+      image-rendering: pixelated;
+      image-rendering: crisp-edges;
+    }
+
+    /* Loading screen */
+    #loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #FAF7F2;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    #loading .coffee {
+      font-size: 48px;
+      margin-bottom: 20px;
+      animation: bounce 0.5s ease-in-out infinite alternate;
+    }
+
+    @keyframes bounce {
+      from { transform: translateY(0); }
+      to { transform: translateY(-10px); }
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <div id="loading">
+      <div class="coffee">☕</div>
+      <div>Brewing...</div>
+    </div>
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
