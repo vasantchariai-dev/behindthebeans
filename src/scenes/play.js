@@ -69,87 +69,93 @@ export class PlayScene extends Phaser.Scene {
 
   /**
    * Get configuration for a given level
-   * Difficulty ramps up gradually over days
+   * ALL 3 TASKS available from day 1, but frequency/intensity ramps up
    */
   getLevelConfig(level) {
     const configs = {
-      // Day 1: Tutorial - just coffee runs, very relaxed
+      // Day 1: Easy intro - all tasks but very relaxed timing
       1: {
-        orderInterval: 8000,      // 8 seconds between orders
-        orderTimeout: 15000,      // 15 seconds to deliver
-        crewEnabled: false,
-        actorEnabled: false,
+        orderInterval: 10000,     // 10 seconds between orders
+        orderTimeout: 18000,      // 18 seconds to deliver
+        crewEnabled: true,        // All tasks from start
+        actorEnabled: true,
         speed: 0.8,
-        crewSpeed: 12,            // Slower crew
-        maxCrew: 0,
-        caffeineDecay: 0.3,       // Very slow energy drain
-        tasksToAdvance: 3,        // Only 3 deliveries to pass day 1
-      },
-      // Day 2: Slightly faster, still just coffee
-      2: {
-        orderInterval: 7000,
-        orderTimeout: 12000,
-        crewEnabled: false,
-        actorEnabled: false,
-        speed: 0.9,
-        crewSpeed: 14,
-        maxCrew: 0,
-        caffeineDecay: 0.4,
+        crewSpeed: 10,            // Very slow crew
+        maxCrew: 1,
+        crewInterval: 15000,      // Rare crew spawns
+        actorInterval: 25000,     // Rare actor needs
+        caffeineDecay: 0.25,      // Very slow energy drain
         tasksToAdvance: 4,
       },
-      // Day 3: Introduce crew blocking (one at a time)
+      // Day 2: Slightly busier
+      2: {
+        orderInterval: 9000,
+        orderTimeout: 16000,
+        crewEnabled: true,
+        actorEnabled: true,
+        speed: 0.85,
+        crewSpeed: 11,
+        maxCrew: 1,
+        crewInterval: 12000,
+        actorInterval: 20000,
+        caffeineDecay: 0.3,
+        tasksToAdvance: 5,
+      },
+      // Day 3: Getting busier
       3: {
+        orderInterval: 8000,
+        orderTimeout: 14000,
+        crewEnabled: true,
+        actorEnabled: true,
+        speed: 0.9,
+        crewSpeed: 12,
+        maxCrew: 2,
+        crewInterval: 10000,
+        actorInterval: 18000,
+        caffeineDecay: 0.4,
+        tasksToAdvance: 6,
+      },
+      // Day 4: More hectic
+      4: {
+        orderInterval: 7000,
+        orderTimeout: 12000,
+        crewEnabled: true,
+        actorEnabled: true,
+        speed: 0.95,
+        crewSpeed: 14,
+        maxCrew: 2,
+        crewInterval: 8000,
+        actorInterval: 15000,
+        caffeineDecay: 0.5,
+        tasksToAdvance: 7,
+      },
+      // Day 5: Busy day
+      5: {
         orderInterval: 6000,
         orderTimeout: 11000,
         crewEnabled: true,
-        actorEnabled: false,
-        speed: 0.95,
-        crewSpeed: 16,            // Slower crew - easier to catch
-        maxCrew: 1,
-        crewInterval: 10000,      // Slow crew spawns
-        caffeineDecay: 0.5,
-        tasksToAdvance: 5,
-      },
-      // Day 4: More crew, faster pace
-      4: {
-        orderInterval: 5500,
-        orderTimeout: 10000,
-        crewEnabled: true,
-        actorEnabled: false,
+        actorEnabled: true,
         speed: 1.0,
-        crewSpeed: 18,
+        crewSpeed: 16,
         maxCrew: 2,
         crewInterval: 7000,
+        actorInterval: 13000,
         caffeineDecay: 0.6,
-        tasksToAdvance: 6,
+        tasksToAdvance: 8,
       },
-      // Day 5: Introduce actor escorts
-      5: {
+      // Day 6+: Chaos mode
+      6: {
         orderInterval: 5000,
         orderTimeout: 10000,
         crewEnabled: true,
         actorEnabled: true,
-        speed: 1.0,
-        crewSpeed: 20,
-        maxCrew: 2,
-        crewInterval: 6000,
-        actorInterval: 15000,
-        caffeineDecay: 0.7,
-        tasksToAdvance: 7,
-      },
-      // Day 6+: Full chaos, endless mode
-      6: {
-        orderInterval: 4500,
-        orderTimeout: 9000,
-        crewEnabled: true,
-        actorEnabled: true,
         speed: 1.1,
-        crewSpeed: 22,
+        crewSpeed: 18,
         maxCrew: 3,
-        crewInterval: 5000,
-        actorInterval: 12000,
-        caffeineDecay: 0.8,
-        tasksToAdvance: 8,
+        crewInterval: 6000,
+        actorInterval: 11000,
+        caffeineDecay: 0.7,
+        tasksToAdvance: 9,
       },
     };
 
@@ -158,13 +164,13 @@ export class PlayScene extends Phaser.Scene {
       const base = configs[6];
       return {
         ...base,
-        orderInterval: Math.max(3000, base.orderInterval - (level - 6) * 200),
-        orderTimeout: Math.max(7000, base.orderTimeout - (level - 6) * 200),
-        speed: Math.min(1.5, base.speed + (level - 6) * 0.05),
-        crewSpeed: Math.min(30, base.crewSpeed + (level - 6) * 2),
-        crewInterval: Math.max(3000, base.crewInterval - (level - 6) * 200),
-        actorInterval: Math.max(8000, base.actorInterval - (level - 6) * 500),
-        caffeineDecay: Math.min(1.2, base.caffeineDecay + (level - 6) * 0.1),
+        orderInterval: Math.max(3500, base.orderInterval - (level - 6) * 150),
+        orderTimeout: Math.max(8000, base.orderTimeout - (level - 6) * 150),
+        speed: Math.min(1.4, base.speed + (level - 6) * 0.04),
+        crewSpeed: Math.min(25, base.crewSpeed + (level - 6) * 1.5),
+        crewInterval: Math.max(4000, base.crewInterval - (level - 6) * 150),
+        actorInterval: Math.max(8000, base.actorInterval - (level - 6) * 300),
+        caffeineDecay: Math.min(1.0, base.caffeineDecay + (level - 6) * 0.05),
         tasksToAdvance: base.tasksToAdvance + (level - 6),
       };
     }
@@ -343,17 +349,17 @@ export class PlayScene extends Phaser.Scene {
       this.gameWidth - 55, 255, 45, 55
     );
 
-    // Director (top left)
-    this.director = this.add.image(60, 100, 'director');
-    this.directorZone = new Phaser.Geom.Rectangle(44, 84, 32, 32);
+    // Director (bottom left, near coffee van for easy delivery)
+    this.director = this.add.image(60, this.gameHeight - 120, 'director');
+    this.directorZone = new Phaser.Geom.Rectangle(44, this.gameHeight - 136, 32, 32);
 
-    // 1st AD (top right) - moved down to avoid HUD overlap
+    // 1st AD (top right)
     this.firstAD = this.add.image(this.gameWidth - 60, 130, 'first-ad');
     this.firstADZone = new Phaser.Geom.Rectangle(this.gameWidth - 76, 114, 32, 32);
 
     // Speech bubbles (hidden initially)
     // Director bubble above character, AD bubble to the left of character
-    this.directorBubble = this.createSpeechBubble(60, 60, false);
+    this.directorBubble = this.createSpeechBubble(60, this.gameHeight - 160, false);
     this.adBubble = this.createSpeechBubble(this.gameWidth - 120, 130, true);
   }
 
@@ -631,9 +637,12 @@ export class PlayScene extends Phaser.Scene {
       this.firstAD.setTexture('first-ad-shout');
     }
 
-    // Show bubble with order - just text, no icon for clarity
+    // Show bubble with order - text AND icon
     bubble.text.setText(COFFEE_NAMES[orderType]);
-    bubble.icon.setVisible(false);  // Hide icon, text is clearer
+    bubble.icon.setTexture(`cup-${orderType}`);
+    bubble.icon.setScale(0.6);
+    bubble.icon.setPosition(45, -4);  // Position icon to the right of text
+    bubble.icon.setVisible(true);
     bubble.setVisible(true);
 
     // Store which person ordered
@@ -739,16 +748,6 @@ export class PlayScene extends Phaser.Scene {
     options.forEach((type, i) => {
       const cupX = startX + i * spacing;
 
-      // Highlight the correct order FIRST (behind cup)
-      if (type === this.currentOrder) {
-        const highlight = this.add.graphics();
-        highlight.fillStyle(0x4ECDC4, 0.3);
-        highlight.fillRoundedRect(cupX - 35, -25, 70, 90, 8);
-        highlight.lineStyle(3, 0x4ECDC4);
-        highlight.strokeRoundedRect(cupX - 35, -25, 70, 90, 8);
-        this.drinkMenu.add(highlight);
-      }
-
       const cup = this.add.image(cupX, 5, `cup-${type}`);
       cup.setInteractive();
 
@@ -762,8 +761,7 @@ export class PlayScene extends Phaser.Scene {
       const label = this.add.text(cupX, 48, drinkLabels[type], {
         fontSize: '10px',
         fontFamily: 'monospace',
-        color: type === this.currentOrder ? '#4ECDC4' : '#FFFFFF',
-        fontStyle: type === this.currentOrder ? 'bold' : 'normal',
+        color: '#FFFFFF',
         align: 'center',
       }).setOrigin(0.5);
       this.drinkMenu.add(label);
@@ -859,7 +857,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Spawn a crew member walking toward the set
+   * Spawn a crew member walking from TOP to BOTTOM toward the set
    */
   spawnCrew() {
     if (this.isGameOver) return;
@@ -888,50 +886,43 @@ export class PlayScene extends Phaser.Scene {
       }
     }
 
-    // Spawn from left or right edge, walking toward the hot set
-    const fromLeft = Math.random() > 0.5;
-    const startX = fromLeft ? -20 : this.gameWidth + 20;
+    // Spawn from TOP of screen, walking DOWN toward the live set
+    const startY = 50; // Just below HUD
+    const x = this.hotSetBounds.x + 20 + Math.random() * (this.hotSetBounds.width - 40);
 
-    // Y position - heading toward hot set
-    const y = this.hotSetBounds.y + 20 + Math.random() * (this.hotSetBounds.height - 40);
-
-    const crew = this.physics.add.image(startX, y, type);
+    const crew = this.physics.add.image(x, startY, type);
     crew.setDepth(5);
     crew.crewType = type;
     crew.isEasterEgg = isEasterEgg;
     crew.isGravedigger = isGravedigger;
     crew.stopped = false;
     crew.enteredSet = false;
-    crew.fromLeft = fromLeft;
-
-    // Flip sprite based on direction
-    crew.setFlipX(!fromLeft);
 
     // Make interactive
     crew.setInteractive();
     crew.on('pointerdown', () => this.onCrewClick(crew));
 
-    // Target is the edge of the hot set, then through
-    const setEdgeX = fromLeft ? this.hotSetBounds.x : this.hotSetBounds.right;
-    const endX = fromLeft ? this.gameWidth + 20 : -20;
+    // Target is the top edge of the live set, then through to bottom
+    const setTopY = this.hotSetBounds.y;
+    const endY = this.hotSetBounds.bottom + 50;
 
-    // Slower movement - use crewSpeed config
-    const durationToSet = (Math.abs(setEdgeX - startX) / this.levelConfig.crewSpeed) * 100;
-    const durationAcross = (Math.abs(endX - setEdgeX) / this.levelConfig.crewSpeed) * 100;
+    // Movement timing - more time to catch them
+    const durationToSet = (Math.abs(setTopY - startY) / this.levelConfig.crewSpeed) * 150;
+    const durationAcross = (Math.abs(endY - setTopY) / this.levelConfig.crewSpeed) * 100;
 
     // First tween - walk to set edge
     const toSetTween = this.tweens.add({
       targets: crew,
-      x: setEdgeX,
+      y: setTopY,
       duration: durationToSet,
       onComplete: () => {
         if (crew.stopped) return;
         // Mark as entered set (less points now)
         crew.enteredSet = true;
-        // Continue across
+        // Continue through set
         this.tweens.add({
           targets: crew,
-          x: endX,
+          y: endY,
           duration: durationAcross,
           onComplete: () => this.onCrewCrossed(crew),
         });
@@ -958,7 +949,7 @@ export class PlayScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(51);
 
-    const tutorialText2 = this.add.text(this.gameWidth / 2, 450, 'TAP them BEFORE they\nreach the hot set!', {
+    const tutorialText2 = this.add.text(this.gameWidth / 2, 450, 'TAP them BEFORE they\nreach the live set!', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
@@ -1600,7 +1591,16 @@ export class PlayScene extends Phaser.Scene {
       // Success!
       this.addScore(50);
       this.coffeeBreakMeter = Math.min(100, this.coffeeBreakMeter + 15);
-      this.showFloatingText(this.player.x, this.player.y - 25, '+50', '#4ECDC4');
+
+      // Refill one missed coffee indicator if any were lost
+      if (this.missedCoffees > 0) {
+        this.missedCoffees--;
+        this.updateMissedIndicators();
+        this.showFloatingText(this.player.x, this.player.y - 25, '+50 +☕', '#4ECDC4');
+      } else {
+        this.showFloatingText(this.player.x, this.player.y - 25, '+50', '#4ECDC4');
+      }
+
       this.playSound('success');
       this.completeTask();
     } else {
