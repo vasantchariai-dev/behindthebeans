@@ -598,65 +598,173 @@ export class BootScene extends Phaser.Scene {
   }
 
   /**
-   * Coffee cups (larger, more detailed)
+   * Coffee cups - large, clear, and distinctive
+   * Each drink has unique visual characteristics
    */
   generateCoffeeCups() {
-    const cupSize = 20;
+    const cupWidth = 36;
+    const cupHeight = 44;
 
-    // Flat white
+    // === FLAT WHITE ===
+    // White cup with creamy latte art heart
     let g = this.make.graphics({ x: 0, y: 0, add: false });
+
+    // Cup body (white)
     g.fillStyle(C.white);
-    g.fillRect(2, 2, 16, 16);
-    g.fillStyle(C.cream);
-    g.fillRect(4, 4, 12, 12);
+    g.fillRect(4, 8, 28, 32);
+    g.fillStyle(C.greyLight);
+    g.fillRect(4, 8, 4, 32); // Left shadow
+    g.fillRect(4, 36, 28, 4); // Bottom shadow
+
+    // Cup rim
+    g.fillStyle(C.greyDark);
+    g.fillRect(2, 6, 32, 4);
+    g.fillStyle(C.white);
+    g.fillRect(4, 6, 28, 2);
+
+    // Handle
+    g.fillStyle(C.white);
+    g.fillRect(32, 14, 4, 16);
+    g.fillRect(30, 12, 6, 4);
+    g.fillRect(30, 28, 6, 4);
+    g.fillStyle(C.greyLight);
+    g.fillRect(32, 18, 2, 8);
+
+    // Coffee surface (light brown/creamy)
     g.fillStyle(0xD4A574);
-    g.fillRect(6, 6, 8, 8);
-    // Latte art
+    g.fillRect(6, 10, 24, 24);
+
+    // Latte art heart
     g.fillStyle(C.white);
-    g.fillRect(8, 7, 4, 6);
-    g.fillRect(7, 9, 6, 2);
-    g.generateTexture('cup-flat-white', cupSize, cupSize);
+    g.fillRect(12, 14, 4, 4);
+    g.fillRect(20, 14, 4, 4);
+    g.fillRect(10, 16, 8, 4);
+    g.fillRect(18, 16, 8, 4);
+    g.fillRect(12, 20, 12, 4);
+    g.fillRect(14, 24, 8, 4);
+    g.fillRect(16, 28, 4, 4);
+
+    g.generateTexture('cup-flat-white', cupWidth, cupHeight);
     g.clear();
 
-    // Oat latte
+    // === OAT LATTE ===
+    // Cup with green leaf/oat symbol
+    // Cup body
     g.fillStyle(C.white);
-    g.fillRect(2, 2, 16, 16);
-    g.fillStyle(C.cream);
-    g.fillRect(4, 4, 12, 12);
+    g.fillRect(4, 8, 28, 32);
+    g.fillStyle(C.greyLight);
+    g.fillRect(4, 8, 4, 32);
+    g.fillRect(4, 36, 28, 4);
+
+    // Cup rim
+    g.fillStyle(C.greyDark);
+    g.fillRect(2, 6, 32, 4);
+    g.fillStyle(C.white);
+    g.fillRect(4, 6, 28, 2);
+
+    // Handle
+    g.fillStyle(C.white);
+    g.fillRect(32, 14, 4, 16);
+    g.fillRect(30, 12, 6, 4);
+    g.fillRect(30, 28, 6, 4);
+    g.fillStyle(C.greyLight);
+    g.fillRect(32, 18, 2, 8);
+
+    // Coffee surface (oat milk colour - lighter)
     g.fillStyle(0xC9A86C);
-    g.fillRect(6, 6, 8, 8);
-    // Oat leaf indicator
+    g.fillRect(6, 10, 24, 24);
+
+    // Green leaf/plant symbol for oat
     g.fillStyle(C.green);
-    g.fillRect(8, 7, 4, 2);
-    g.fillRect(9, 9, 2, 4);
-    g.generateTexture('cup-oat-latte', cupSize, cupSize);
+    g.fillRect(16, 12, 4, 16);  // Stem
+    g.fillRect(12, 14, 4, 4);   // Left leaf
+    g.fillRect(20, 14, 4, 4);   // Right leaf
+    g.fillRect(10, 18, 4, 4);   // Left leaf 2
+    g.fillRect(22, 18, 4, 4);   // Right leaf 2
+    g.fillStyle(C.greenDark);
+    g.fillRect(16, 12, 4, 2);   // Stem top
+
+    g.generateTexture('cup-oat-latte', cupWidth, cupHeight);
     g.clear();
 
-    // Black coffee
+    // === BLACK COFFEE ===
+    // Dark cup contents, no art
+    // Cup body
     g.fillStyle(C.white);
-    g.fillRect(2, 2, 16, 16);
-    g.fillStyle(C.cream);
-    g.fillRect(4, 4, 12, 12);
-    g.fillStyle(C.coffee);
-    g.fillRect(6, 6, 8, 8);
+    g.fillRect(4, 8, 28, 32);
+    g.fillStyle(C.greyLight);
+    g.fillRect(4, 8, 4, 32);
+    g.fillRect(4, 36, 28, 4);
+
+    // Cup rim
+    g.fillStyle(C.greyDark);
+    g.fillRect(2, 6, 32, 4);
+    g.fillStyle(C.white);
+    g.fillRect(4, 6, 28, 2);
+
+    // Handle
+    g.fillStyle(C.white);
+    g.fillRect(32, 14, 4, 16);
+    g.fillRect(30, 12, 6, 4);
+    g.fillRect(30, 28, 6, 4);
+    g.fillStyle(C.greyLight);
+    g.fillRect(32, 18, 2, 8);
+
+    // Coffee surface (dark black)
     g.fillStyle(C.coffeeDark);
-    g.fillRect(7, 7, 6, 6);
-    g.generateTexture('cup-black', cupSize, cupSize);
+    g.fillRect(6, 10, 24, 24);
+    g.fillStyle(C.black);
+    g.fillRect(8, 12, 20, 20);
+
+    // Steam wisps
+    g.fillStyle(C.greyLight);
+    g.fillRect(10, 2, 2, 6);
+    g.fillRect(18, 0, 2, 8);
+    g.fillRect(26, 2, 2, 6);
+
+    g.generateTexture('cup-black', cupWidth, cupHeight);
     g.clear();
 
-    // Tea
+    // === TEA ===
+    // Amber liquid with tea bag
+    // Cup body
     g.fillStyle(C.white);
-    g.fillRect(2, 2, 16, 16);
-    g.fillStyle(C.cream);
-    g.fillRect(4, 4, 12, 12);
+    g.fillRect(4, 8, 28, 32);
+    g.fillStyle(C.greyLight);
+    g.fillRect(4, 8, 4, 32);
+    g.fillRect(4, 36, 28, 4);
+
+    // Cup rim
+    g.fillStyle(C.greyDark);
+    g.fillRect(2, 6, 32, 4);
+    g.fillStyle(C.white);
+    g.fillRect(4, 6, 28, 2);
+
+    // Handle
+    g.fillStyle(C.white);
+    g.fillRect(32, 14, 4, 16);
+    g.fillRect(30, 12, 6, 4);
+    g.fillRect(30, 28, 6, 4);
+    g.fillStyle(C.greyLight);
+    g.fillRect(32, 18, 2, 8);
+
+    // Tea surface (amber)
     g.fillStyle(0xCD853F);
-    g.fillRect(6, 6, 8, 8);
+    g.fillRect(6, 10, 24, 24);
+    g.fillStyle(0xDEB887);
+    g.fillRect(8, 12, 20, 8); // Lighter top
+
     // Tea bag string
     g.fillStyle(C.white);
-    g.fillRect(13, 6, 2, 6);
-    g.fillStyle(C.greyDark);
-    g.fillRect(14, 4, 3, 3);
-    g.generateTexture('cup-tea', cupSize, cupSize);
+    g.fillRect(26, 8, 2, 12);
+
+    // Tea bag tag (red)
+    g.fillStyle(C.red);
+    g.fillRect(24, 0, 8, 10);
+    g.fillStyle(C.redLight);
+    g.fillRect(26, 2, 4, 6);
+
+    g.generateTexture('cup-tea', cupWidth, cupHeight);
     g.destroy();
   }
 

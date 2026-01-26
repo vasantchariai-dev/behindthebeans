@@ -1,6 +1,7 @@
 /**
  * Play Scene
  * Main gameplay - coffee runs, crew blocking, actor escorts
+ * Vertical/portrait format for mobile
  * Difficulty builds gradually over days
  */
 
@@ -9,10 +10,10 @@ import Phaser from 'phaser';
 // Game constants
 const COFFEE_TYPES = ['flat-white', 'oat-latte', 'black', 'tea'];
 const COFFEE_NAMES = {
-  'flat-white': 'Flat white!',
-  'oat-latte': 'Oat latte!',
-  'black': 'Black coffee!',
-  'tea': 'Tea!',
+  'flat-white': 'Flat White',
+  'oat-latte': 'Oat Latte',
+  'black': 'Black Coffee',
+  'tea': 'Tea',
 };
 const CREW_TYPES = ['rigger', 'spark', 'runner-crew'];
 
@@ -37,10 +38,10 @@ export class PlayScene extends Phaser.Scene {
     // Game state
     this.score = 0;
     this.level = 1;
-    this.stress = 0; // 0-100
-    this.coffeeBreakMeter = 0; // 0-100
     this.caffeine = 100; // 0-100 (energy level)
+    this.coffeeBreakMeter = 0; // 0-100
     this.tasksCompleted = 0; // Track tasks for level progression
+    this.missedCoffees = 0; // Track missed coffee orders (3 = game over)
 
     // Gameplay flags
     this.hasOrder = false;
@@ -49,6 +50,7 @@ export class PlayScene extends Phaser.Scene {
     this.carriedCoffeeType = null;
     this.isTakingBreak = false;
     this.isGameOver = false;
+    this.shownCrewTutorial = false; // Track if we've shown crew tutorial
 
     // Spawn timers
     this.orderTimer = null;
@@ -78,7 +80,7 @@ export class PlayScene extends Phaser.Scene {
         crewEnabled: false,
         actorEnabled: false,
         speed: 0.8,
-        crewSpeed: 15,
+        crewSpeed: 12,            // Slower crew
         maxCrew: 0,
         caffeineDecay: 0.3,       // Very slow energy drain
         tasksToAdvance: 3,        // Only 3 deliveries to pass day 1
@@ -90,7 +92,7 @@ export class PlayScene extends Phaser.Scene {
         crewEnabled: false,
         actorEnabled: false,
         speed: 0.9,
-        crewSpeed: 18,
+        crewSpeed: 14,
         maxCrew: 0,
         caffeineDecay: 0.4,
         tasksToAdvance: 4,
@@ -102,9 +104,9 @@ export class PlayScene extends Phaser.Scene {
         crewEnabled: true,
         actorEnabled: false,
         speed: 0.95,
-        crewSpeed: 20,
+        crewSpeed: 16,            // Slower crew - easier to catch
         maxCrew: 1,
-        crewInterval: 8000,       // Slow crew spawns
+        crewInterval: 10000,      // Slow crew spawns
         caffeineDecay: 0.5,
         tasksToAdvance: 5,
       },
@@ -115,9 +117,9 @@ export class PlayScene extends Phaser.Scene {
         crewEnabled: true,
         actorEnabled: false,
         speed: 1.0,
-        crewSpeed: 25,
+        crewSpeed: 18,
         maxCrew: 2,
-        crewInterval: 6000,
+        crewInterval: 7000,
         caffeineDecay: 0.6,
         tasksToAdvance: 6,
       },
@@ -128,9 +130,9 @@ export class PlayScene extends Phaser.Scene {
         crewEnabled: true,
         actorEnabled: true,
         speed: 1.0,
-        crewSpeed: 28,
+        crewSpeed: 20,
         maxCrew: 2,
-        crewInterval: 5000,
+        crewInterval: 6000,
         actorInterval: 15000,
         caffeineDecay: 0.7,
         tasksToAdvance: 7,
@@ -142,9 +144,9 @@ export class PlayScene extends Phaser.Scene {
         crewEnabled: true,
         actorEnabled: true,
         speed: 1.1,
-        crewSpeed: 32,
+        crewSpeed: 22,
         maxCrew: 3,
-        crewInterval: 4000,
+        crewInterval: 5000,
         actorInterval: 12000,
         caffeineDecay: 0.8,
         tasksToAdvance: 8,
@@ -159,8 +161,8 @@ export class PlayScene extends Phaser.Scene {
         orderInterval: Math.max(3000, base.orderInterval - (level - 6) * 200),
         orderTimeout: Math.max(7000, base.orderTimeout - (level - 6) * 200),
         speed: Math.min(1.5, base.speed + (level - 6) * 0.05),
-        crewSpeed: base.crewSpeed + (level - 6) * 3,
-        crewInterval: Math.max(2500, base.crewInterval - (level - 6) * 200),
+        crewSpeed: Math.min(30, base.crewSpeed + (level - 6) * 2),
+        crewInterval: Math.max(3000, base.crewInterval - (level - 6) * 200),
         actorInterval: Math.max(8000, base.actorInterval - (level - 6) * 500),
         caffeineDecay: Math.min(1.2, base.caffeineDecay + (level - 6) * 0.1),
         tasksToAdvance: base.tasksToAdvance + (level - 6),
@@ -203,12 +205,12 @@ export class PlayScene extends Phaser.Scene {
     // Floor
     const g = this.add.graphics();
     g.fillStyle(0xFAF7F2);
-    g.fillRect(0, 40, this.gameWidth, this.gameHeight - 40);
+    g.fillRect(0, 50, this.gameWidth, this.gameHeight - 50);
 
     // Add some floor texture
     g.fillStyle(0xE8E8E8, 0.3);
     for (let x = 0; x < this.gameWidth; x += 40) {
-      for (let y = 40; y < this.gameHeight; y += 40) {
+      for (let y = 50; y < this.gameHeight; y += 40) {
         if ((x + y) % 80 === 0) {
           g.fillRect(x, y, 20, 20);
         }
@@ -217,68 +219,141 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Create hot set area (no crossing zone)
+   * Create hot set area (no crossing zone) - CENTERED with more props
    */
   createHotSet() {
-    // Hot set boundaries - centered, larger for new resolution
-    this.hotSetBounds = new Phaser.Geom.Rectangle(150, 110, 200, 120);
+    // Hot set boundaries - centered in the middle of the screen
+    const setWidth = 200;
+    const setHeight = 140;
+    this.hotSetBounds = new Phaser.Geom.Rectangle(
+      (this.gameWidth - setWidth) / 2,
+      200,
+      setWidth,
+      setHeight
+    );
 
     // Draw hot set area
     const g = this.add.graphics();
 
-    // Floor of hot set
-    g.fillStyle(0xFFE4E1, 0.5);
+    // Floor of hot set (wooden stage look)
+    g.fillStyle(0xDEB887, 0.7);
     g.fillRect(this.hotSetBounds.x, this.hotSetBounds.y,
       this.hotSetBounds.width, this.hotSetBounds.height);
 
+    // Stage floor boards
+    g.lineStyle(1, 0xCD853F, 0.5);
+    for (let x = this.hotSetBounds.x; x < this.hotSetBounds.right; x += 20) {
+      g.moveTo(x, this.hotSetBounds.y);
+      g.lineTo(x, this.hotSetBounds.bottom);
+    }
+    g.strokePath();
+
     // Hazard stripes around border
-    g.lineStyle(3, 0xE63946);
+    g.lineStyle(4, 0xE63946);
     g.strokeRect(this.hotSetBounds.x, this.hotSetBounds.y,
       this.hotSetBounds.width, this.hotSetBounds.height);
 
     // "HOT SET" label
-    this.add.text(this.hotSetBounds.centerX, this.hotSetBounds.centerY, 'HOT SET', {
-      fontSize: '16px',
+    this.add.text(this.hotSetBounds.centerX, this.hotSetBounds.y + 15, 'HOT SET', {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#E63946',
       fontStyle: 'bold',
-    }).setOrigin(0.5).setAlpha(0.7);
+    }).setOrigin(0.5).setAlpha(0.8);
 
-    // Camera
-    this.add.image(this.hotSetBounds.x + 30, this.hotSetBounds.y + 30, 'camera');
+    // Camera on tripod (main)
+    this.add.image(this.hotSetBounds.x + 40, this.hotSetBounds.y + 50, 'camera');
+
+    // Add more film equipment inside the set
+    this.addFilmProps();
+  }
+
+  /**
+   * Add film props/equipment inside the hot set for visual interest
+   */
+  addFilmProps() {
+    const g = this.add.graphics();
+    const setX = this.hotSetBounds.x;
+    const setY = this.hotSetBounds.y;
+
+    // Light stand (left side)
+    g.fillStyle(0x333333);
+    g.fillRect(setX + 10, setY + 80, 6, 50);
+    g.fillStyle(0xFFFFCC);
+    g.fillRect(setX + 2, setY + 65, 22, 18);
+    g.fillStyle(0xFFFF99);
+    g.fillRect(setX + 5, setY + 68, 16, 12);
+
+    // Boom mic (top right)
+    g.fillStyle(0x555555);
+    g.fillRect(setX + 150, setY + 30, 40, 4);
+    g.fillStyle(0x888888);
+    g.fillRect(setX + 180, setY + 26, 16, 12);
+
+    // C-stand with flag (bottom right)
+    g.fillStyle(0x444444);
+    g.fillRect(setX + 160, setY + 90, 4, 40);
+    g.fillStyle(0x222222);
+    g.fillRect(setX + 155, setY + 85, 30, 20);
+
+    // Apple box (center)
+    g.fillStyle(0x8B4513);
+    g.fillRect(setX + 85, setY + 100, 30, 18);
+    g.fillStyle(0xA0522D);
+    g.fillRect(setX + 87, setY + 102, 26, 3);
+
+    // Slate/clapperboard (on ground)
+    g.fillStyle(0x1A1A1A);
+    g.fillRect(setX + 120, setY + 110, 25, 20);
+    g.fillStyle(0xFFFFFF);
+    g.fillRect(setX + 122, setY + 118, 21, 10);
+    // Clapper stripes
+    g.fillStyle(0x1A1A1A);
+    for (let i = 0; i < 4; i++) {
+      g.fillRect(setX + 122 + i * 6, setY + 112, 3, 6);
+    }
+
+    // Monitor on stand (right edge)
+    g.fillStyle(0x333333);
+    g.fillRect(setX + 175, setY + 55, 4, 35);
+    g.fillStyle(0x222222);
+    g.fillRect(setX + 165, setY + 45, 24, 16);
+    g.fillStyle(0x4444FF);
+    g.fillRect(setX + 167, setY + 47, 20, 12);
   }
 
   /**
    * Create key locations (coffee van, toilet, director, AD)
+   * Adjusted for vertical layout
    */
   createLocations() {
     // Coffee van (bottom area)
-    this.coffeeVan = this.add.image(this.gameWidth / 2, this.gameHeight - 45, 'coffee-van');
+    this.coffeeVan = this.add.image(this.gameWidth / 2, this.gameHeight - 50, 'coffee-van');
     this.coffeeVanZone = new Phaser.Geom.Rectangle(
-      this.gameWidth / 2 - 60, this.gameHeight - 85, 120, 80
+      this.gameWidth / 2 - 60, this.gameHeight - 90, 120, 80
     );
 
     // Make coffee van interactive
     this.coffeeVan.setInteractive();
     this.coffeeVan.on('pointerdown', () => this.onCoffeeVanClick());
 
-    // Toilet (right side)
-    this.toilet = this.add.image(this.gameWidth - 40, 140, 'toilet');
+    // Toilet (right side, middle)
+    this.toilet = this.add.image(this.gameWidth - 35, 280, 'toilet');
     this.toiletZone = new Phaser.Geom.Rectangle(
-      this.gameWidth - 60, 115, 45, 55
+      this.gameWidth - 55, 255, 45, 55
     );
 
-    // Director (top area)
-    this.director = this.add.image(200, 75, 'director');
-    this.directorZone = new Phaser.Geom.Rectangle(184, 59, 32, 32);
+    // Director (top left)
+    this.director = this.add.image(60, 100, 'director');
+    this.directorZone = new Phaser.Geom.Rectangle(44, 84, 32, 32);
 
-    // 1st AD (left side)
-    this.firstAD = this.add.image(80, 95, 'first-ad');
-    this.firstADZone = new Phaser.Geom.Rectangle(64, 79, 32, 32);
+    // 1st AD (top right)
+    this.firstAD = this.add.image(this.gameWidth - 60, 100, 'first-ad');
+    this.firstADZone = new Phaser.Geom.Rectangle(this.gameWidth - 76, 84, 32, 32);
 
     // Speech bubbles (hidden initially)
-    this.directorBubble = this.createSpeechBubble(200, 35);
-    this.adBubble = this.createSpeechBubble(80, 55);
+    this.directorBubble = this.createSpeechBubble(60, 60);
+    this.adBubble = this.createSpeechBubble(this.gameWidth - 60, 60);
   }
 
   /**
@@ -290,13 +365,13 @@ export class PlayScene extends Phaser.Scene {
     // Background
     const bg = this.add.graphics();
     bg.fillStyle(0xFFFFFF);
-    bg.fillRoundedRect(-50, -20, 100, 32, 6);
-    bg.fillTriangle(-5, 12, 5, 12, 0, 20);
+    bg.fillRoundedRect(-55, -22, 110, 36, 6);
+    bg.fillTriangle(-5, 14, 5, 14, 0, 22);
     container.add(bg);
 
     // Text
     const text = this.add.text(0, -6, '', {
-      fontSize: '11px',
+      fontSize: '12px',
       fontFamily: 'monospace',
       color: '#1A1A1A',
       align: 'center',
@@ -320,7 +395,7 @@ export class PlayScene extends Phaser.Scene {
    */
   createPlayer() {
     // Starting position (near coffee van)
-    this.player = this.physics.add.image(this.gameWidth / 2, this.gameHeight - 120, 'player-idle');
+    this.player = this.physics.add.image(this.gameWidth / 2, this.gameHeight - 150, 'player-idle');
     this.player.setCollideWorldBounds(true);
     this.player.setDepth(10);
 
@@ -336,19 +411,19 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Create HUD elements
+   * Create HUD elements - adjusted for vertical layout
    */
   createHUD() {
     const hudY = 8;
 
-    // Score
+    // Score (top left)
     this.scoreText = this.add.text(10, hudY, 'SCORE: 0', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
     });
 
-    // Level/Day
+    // Level/Day (below score)
     this.levelText = this.add.text(10, hudY + 18, 'DAY 1', {
       fontSize: '12px',
       fontFamily: 'monospace',
@@ -363,29 +438,54 @@ export class PlayScene extends Phaser.Scene {
     });
     this.updateTasksText();
 
-    // Coffee break meter (right side)
-    this.add.text(this.gameWidth - 180, hudY, 'BREAK', {
-      fontSize: '10px',
-      fontFamily: 'monospace',
-      color: '#8B4513',
-    });
-    this.coffeeBreakBar = this.createMeterBar(this.gameWidth - 140, hudY - 2, 80, 14, 0x8B4513);
-
-    // Stress meter (far right)
-    this.add.text(this.gameWidth - 55, hudY, 'STRESS', {
-      fontSize: '8px',
-      fontFamily: 'monospace',
-      color: '#E8E8E8',
-    });
-    this.stressFace = this.add.image(this.gameWidth - 20, hudY + 12, 'face-happy');
-
-    // Energy bar
-    this.add.text(this.gameWidth - 180, hudY + 18, 'ENERGY', {
+    // Energy bar (top right)
+    this.add.text(this.gameWidth - 95, hudY, 'ENERGY', {
       fontSize: '10px',
       fontFamily: 'monospace',
       color: '#4CAF50',
     });
-    this.caffeineBar = this.createMeterBar(this.gameWidth - 140, hudY + 16, 80, 14, 0x4CAF50);
+    this.caffeineBar = this.createMeterBar(this.gameWidth - 95, hudY + 14, 85, 12, 0x4CAF50);
+
+    // Coffee break meter (below energy)
+    this.add.text(this.gameWidth - 95, hudY + 30, 'BREAK', {
+      fontSize: '10px',
+      fontFamily: 'monospace',
+      color: '#8B4513',
+    });
+    this.coffeeBreakBar = this.createMeterBar(this.gameWidth - 95, hudY + 44, 85, 12, 0x8B4513);
+
+    // Missed coffees indicator (coffee cups that turn red)
+    this.missedIndicators = [];
+    for (let i = 0; i < 3; i++) {
+      const cup = this.add.graphics();
+      cup.fillStyle(0x4CAF50);
+      cup.fillRect(this.gameWidth / 2 - 30 + i * 22, hudY + 2, 16, 20);
+      cup.fillStyle(0x8B4513);
+      cup.fillRect(this.gameWidth / 2 - 28 + i * 22, hudY + 5, 12, 14);
+      this.missedIndicators.push(cup);
+    }
+  }
+
+  /**
+   * Update missed coffee indicators
+   */
+  updateMissedIndicators() {
+    for (let i = 0; i < 3; i++) {
+      this.missedIndicators[i].clear();
+      if (i < this.missedCoffees) {
+        // Red - missed
+        this.missedIndicators[i].fillStyle(0xE63946);
+        this.missedIndicators[i].fillRect(this.gameWidth / 2 - 30 + i * 22, 10, 16, 20);
+        this.missedIndicators[i].lineStyle(2, 0xAA0000);
+        this.missedIndicators[i].strokeRect(this.gameWidth / 2 - 30 + i * 22, 10, 16, 20);
+      } else {
+        // Green - ok
+        this.missedIndicators[i].fillStyle(0x4CAF50);
+        this.missedIndicators[i].fillRect(this.gameWidth / 2 - 30 + i * 22, 10, 16, 20);
+        this.missedIndicators[i].fillStyle(0x8B4513);
+        this.missedIndicators[i].fillRect(this.gameWidth / 2 - 28 + i * 22, 13, 12, 14);
+      }
+    }
   }
 
   /**
@@ -529,11 +629,12 @@ export class PlayScene extends Phaser.Scene {
     // Play shout sound
     this.playSound('shout');
 
-    // Order timeout - increases stress if not fulfilled
+    // Order timeout - MISSED COFFEE (counts towards game over)
     this.orderTimeout = this.time.delayedCall(this.levelConfig.orderTimeout, () => {
       if (this.hasOrder && this.currentOrder === orderType) {
-        this.addStress(12);
-        this.showFloatingText(this.player.x, this.player.y - 20, 'TOO SLOW!', '#E63946');
+        this.missedCoffees++;
+        this.updateMissedIndicators();
+        this.showFloatingText(this.player.x, this.player.y - 20, 'MISSED ORDER!', '#E63946');
         this.hasOrder = false;
         this.currentOrder = null;
         bubble.setVisible(false);
@@ -543,8 +644,14 @@ export class PlayScene extends Phaser.Scene {
         } else {
           this.firstAD.setTexture('first-ad');
         }
-        // Schedule next order
-        this.scheduleNextOrder();
+
+        // Check for game over (3 missed coffees)
+        if (this.missedCoffees >= 3) {
+          this.gameOver('missed');
+        } else {
+          // Schedule next order
+          this.scheduleNextOrder();
+        }
       }
     });
   }
@@ -561,7 +668,7 @@ export class PlayScene extends Phaser.Scene {
       this.coffeeVan.x, this.coffeeVan.y
     );
 
-    if (dist > 80) return; // Too far
+    if (dist > 100) return; // Too far
 
     // If coffee break meter is full and not carrying coffee, take a break
     if (this.coffeeBreakMeter >= 100 && !this.isCarryingCoffee) {
@@ -576,44 +683,52 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Show drink selection menu
+   * Show drink selection menu - larger cups, vertical layout
    */
   showDrinkMenu() {
     // Create menu container
-    const menuX = this.coffeeVan.x;
-    const menuY = this.coffeeVan.y - 70;
+    const menuX = this.gameWidth / 2;
+    const menuY = this.gameHeight - 180;
 
     this.drinkMenu = this.add.container(menuX, menuY);
     this.drinkMenu.setDepth(20);
 
-    // Background
+    // Background - wider for larger cups
     const bg = this.add.graphics();
     bg.fillStyle(0x333333, 0.95);
-    bg.fillRoundedRect(-100, -30, 200, 60, 8);
-    bg.lineStyle(2, 0x4ECDC4);
-    bg.strokeRoundedRect(-100, -30, 200, 60, 8);
+    bg.fillRoundedRect(-160, -50, 320, 100, 10);
+    bg.lineStyle(3, 0x4ECDC4);
+    bg.strokeRoundedRect(-160, -50, 320, 100, 10);
     this.drinkMenu.add(bg);
 
     // Title
-    const title = this.add.text(0, -20, 'SELECT DRINK', {
-      fontSize: '10px',
+    const title = this.add.text(0, -38, 'CHOOSE THE DRINK', {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
+      fontStyle: 'bold',
     }).setOrigin(0.5);
     this.drinkMenu.add(title);
 
-    // Drink options
+    // Drink options - larger spacing for bigger cups
     const options = COFFEE_TYPES;
-    const spacing = 45;
-    const startX = -67;
+    const spacing = 75;
+    const startX = -112;
 
     options.forEach((type, i) => {
-      const cup = this.add.image(startX + i * spacing, 8, `cup-${type}`);
+      const cup = this.add.image(startX + i * spacing, 15, `cup-${type}`);
       cup.setInteractive();
-      cup.setScale(1.5);
 
-      cup.on('pointerover', () => cup.setScale(2));
-      cup.on('pointerout', () => cup.setScale(1.5));
+      // Highlight the correct order
+      if (type === this.currentOrder) {
+        const highlight = this.add.graphics();
+        highlight.lineStyle(3, 0x4ECDC4);
+        highlight.strokeCircle(startX + i * spacing, 15, 30);
+        this.drinkMenu.add(highlight);
+      }
+
+      cup.on('pointerover', () => cup.setScale(1.2));
+      cup.on('pointerout', () => cup.setScale(1));
       cup.on('pointerdown', () => this.selectDrink(type));
 
       this.drinkMenu.add(cup);
@@ -663,7 +778,6 @@ export class PlayScene extends Phaser.Scene {
     this.time.delayedCall(2000, () => {
       this.isTakingBreak = false;
       this.caffeine = Math.min(100, this.caffeine + 40);
-      this.stress = Math.max(0, this.stress - 15);
       this.addScore(100);
       this.player.setTexture('player-idle');
       this.playSound('success');
@@ -710,11 +824,17 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Spawn a crew member walking across the set
+   * Spawn a crew member walking toward the set
    */
   spawnCrew() {
     if (this.isGameOver) return;
     if (this.crewMembers.length >= this.levelConfig.maxCrew) return;
+
+    // Show tutorial on first crew spawn
+    if (!this.shownCrewTutorial) {
+      this.showCrewTutorial();
+      this.shownCrewTutorial = true;
+    }
 
     // Random crew type
     const types = CREW_TYPES;
@@ -733,12 +853,11 @@ export class PlayScene extends Phaser.Scene {
       }
     }
 
-    // Spawn from left or right edge
+    // Spawn from left or right edge, walking toward the hot set
     const fromLeft = Math.random() > 0.5;
     const startX = fromLeft ? -20 : this.gameWidth + 20;
-    const endX = fromLeft ? this.gameWidth + 20 : -20;
 
-    // Y position within hot set area
+    // Y position - heading toward hot set
     const y = this.hotSetBounds.y + 20 + Math.random() * (this.hotSetBounds.height - 40);
 
     const crew = this.physics.add.image(startX, y, type);
@@ -747,6 +866,8 @@ export class PlayScene extends Phaser.Scene {
     crew.isEasterEgg = isEasterEgg;
     crew.isGravedigger = isGravedigger;
     crew.stopped = false;
+    crew.enteredSet = false;
+    crew.fromLeft = fromLeft;
 
     // Flip sprite based on direction
     crew.setFlipX(!fromLeft);
@@ -755,16 +876,72 @@ export class PlayScene extends Phaser.Scene {
     crew.setInteractive();
     crew.on('pointerdown', () => this.onCrewClick(crew));
 
-    // Move across screen
-    const duration = 5000 / (this.levelConfig.crewSpeed / 20);
-    this.tweens.add({
+    // Target is the edge of the hot set, then through
+    const setEdgeX = fromLeft ? this.hotSetBounds.x : this.hotSetBounds.right;
+    const endX = fromLeft ? this.gameWidth + 20 : -20;
+
+    // Slower movement - use crewSpeed config
+    const durationToSet = (Math.abs(setEdgeX - startX) / this.levelConfig.crewSpeed) * 100;
+    const durationAcross = (Math.abs(endX - setEdgeX) / this.levelConfig.crewSpeed) * 100;
+
+    // First tween - walk to set edge
+    const toSetTween = this.tweens.add({
       targets: crew,
-      x: endX,
-      duration: duration,
-      onComplete: () => this.onCrewCrossed(crew),
+      x: setEdgeX,
+      duration: durationToSet,
+      onComplete: () => {
+        if (crew.stopped) return;
+        // Mark as entered set (less points now)
+        crew.enteredSet = true;
+        // Continue across
+        this.tweens.add({
+          targets: crew,
+          x: endX,
+          duration: durationAcross,
+          onComplete: () => this.onCrewCrossed(crew),
+        });
+      },
     });
 
+    crew.toSetTween = toSetTween;
     this.crewMembers.push(crew);
+  }
+
+  /**
+   * Show crew tutorial message
+   */
+  showCrewTutorial() {
+    const tutorialBg = this.add.graphics();
+    tutorialBg.fillStyle(0x000000, 0.8);
+    tutorialBg.fillRoundedRect(this.gameWidth / 2 - 150, 400, 300, 80, 10);
+    tutorialBg.setDepth(50);
+
+    const tutorialText = this.add.text(this.gameWidth / 2, 420, '🚫 CREW INCOMING!', {
+      fontSize: '18px',
+      fontFamily: 'monospace',
+      color: '#E63946',
+      fontStyle: 'bold',
+    }).setOrigin(0.5).setDepth(51);
+
+    const tutorialText2 = this.add.text(this.gameWidth / 2, 450, 'TAP them BEFORE they\nreach the hot set!', {
+      fontSize: '14px',
+      fontFamily: 'monospace',
+      color: '#FAF7F2',
+      align: 'center',
+    }).setOrigin(0.5).setDepth(51);
+
+    // Flash the tutorial
+    this.tweens.add({
+      targets: [tutorialBg, tutorialText, tutorialText2],
+      alpha: 0,
+      delay: 3000,
+      duration: 500,
+      onComplete: () => {
+        tutorialBg.destroy();
+        tutorialText.destroy();
+        tutorialText2.destroy();
+      },
+    });
   }
 
   /**
@@ -776,7 +953,6 @@ export class PlayScene extends Phaser.Scene {
     // Gravedigger should NOT be stopped
     if (crew.isGravedigger) {
       // Oops! They look offended
-      this.addStress(8);
       this.showFloatingText(crew.x, crew.y - 25, "I'm in the scene!", '#E63946');
       this.playSound('fail');
       return;
@@ -789,13 +965,25 @@ export class PlayScene extends Phaser.Scene {
     // Visual feedback
     crew.setAlpha(0.5);
 
-    // Add score
-    if (crew.isEasterEgg) {
-      this.addScore(50);
-      this.showFloatingText(crew.x, crew.y - 25, '+50 BONUS!', '#4ECDC4');
+    // Score depends on whether they entered the set
+    if (crew.enteredSet) {
+      // Less points - they already got onto the set
+      if (crew.isEasterEgg) {
+        this.addScore(25);
+        this.showFloatingText(crew.x, crew.y - 25, '+25 (late!)', '#FF9800');
+      } else {
+        this.addScore(10);
+        this.showFloatingText(crew.x, crew.y - 25, '+10 (late!)', '#FF9800');
+      }
     } else {
-      this.addScore(25);
-      this.showFloatingText(crew.x, crew.y - 25, '+25', '#4ECDC4');
+      // Full points - stopped before set
+      if (crew.isEasterEgg) {
+        this.addScore(50);
+        this.showFloatingText(crew.x, crew.y - 25, '+50 BONUS!', '#4ECDC4');
+      } else {
+        this.addScore(25);
+        this.showFloatingText(crew.x, crew.y - 25, '+25', '#4ECDC4');
+      }
     }
 
     // Increase coffee break meter
@@ -815,7 +1003,7 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Handle crew member crossing the set
+   * Handle crew member crossing the set completely
    */
   onCrewCrossed(crew) {
     if (crew.stopped) return;
@@ -825,8 +1013,7 @@ export class PlayScene extends Phaser.Scene {
       this.addScore(30);
       this.showFloatingText(crew.x - 30, crew.y - 25, '+30 NICE!', '#4ECDC4');
     } else {
-      // Regular crew crossed - add stress
-      this.addStress(12);
+      // Regular crew crossed completely - this is bad but not game over
       this.showFloatingText(crew.x - 30, crew.y - 25, 'IN THE SHOT!', '#E63946');
       this.playSound('fail');
     }
@@ -847,49 +1034,6 @@ export class PlayScene extends Phaser.Scene {
     // Check for level up
     if (this.tasksCompleted >= this.levelConfig.tasksToAdvance) {
       this.levelComplete();
-    }
-  }
-
-  /**
-   * Add stress (0-100)
-   */
-  addStress(amount) {
-    this.stress = Math.min(100, this.stress + amount);
-
-    // Screen shake on high stress
-    if (this.stress >= 70) {
-      this.cameras.main.shake(200, 0.005);
-    }
-
-    // Update stress face
-    this.updateStressFace();
-
-    // Game over if stress hits 100
-    if (this.stress >= 100) {
-      this.gameOver('stress');
-    }
-  }
-
-  /**
-   * Reduce stress
-   */
-  reduceStress(amount) {
-    this.stress = Math.max(0, this.stress - amount);
-    this.updateStressFace();
-  }
-
-  /**
-   * Update stress face icon
-   */
-  updateStressFace() {
-    if (this.stress < 25) {
-      this.stressFace.setTexture('face-happy');
-    } else if (this.stress < 50) {
-      this.stressFace.setTexture('face-neutral');
-    } else if (this.stress < 75) {
-      this.stressFace.setTexture('face-worried');
-    } else {
-      this.stressFace.setTexture('face-angry');
     }
   }
 
@@ -926,9 +1070,9 @@ export class PlayScene extends Phaser.Scene {
    */
   showTutorial() {
     const texts = [
-      { delay: 500, text: 'Use WASD or click to move!', y: 200 },
-      { delay: 3000, text: 'Fetch coffees when the AD or Director shouts!', y: 200 },
-      { delay: 6000, text: 'Complete tasks to earn coffee breaks!', y: 200 },
+      { delay: 500, text: 'Use WASD or tap to move!', y: 450 },
+      { delay: 3000, text: 'When someone shouts, tap the van\nand pick the RIGHT drink!', y: 450 },
+      { delay: 6500, text: 'Deliver to whoever ordered!', y: 450 },
     ];
 
     texts.forEach(({ delay, text, y }) => {
@@ -940,6 +1084,7 @@ export class PlayScene extends Phaser.Scene {
           color: '#4ECDC4',
           backgroundColor: '#2D314288',
           padding: { x: 10, y: 5 },
+          align: 'center',
         }).setOrigin(0.5).setDepth(100);
 
         this.tweens.add({
@@ -960,8 +1105,8 @@ export class PlayScene extends Phaser.Scene {
     if (this.activeActor || this.isGameOver) return;
     if (!this.levelConfig.actorEnabled) return;
 
-    // Create actor near hot set
-    const startX = 70;
+    // Create actor near hot set (left side)
+    const startX = 50;
     const startY = this.hotSetBounds.centerY;
 
     this.activeActor = this.physics.add.image(startX, startY, 'actor-desperate');
@@ -972,6 +1117,9 @@ export class PlayScene extends Phaser.Scene {
     this.actorBubble.text.setText('Need loo!');
     this.actorBubble.icon.setVisible(false);
     this.actorBubble.setVisible(true);
+
+    // Show tutorial for actor
+    this.showActorTutorial();
 
     // Make actor interactive for path drawing
     this.activeActor.setInteractive();
@@ -984,10 +1132,31 @@ export class PlayScene extends Phaser.Scene {
     // Timeout for actor
     this.actorTimeout = this.time.delayedCall(12000, () => {
       if (this.activeActor) {
-        this.addStress(20);
         this.showFloatingText(this.activeActor.x, this.activeActor.y - 25, 'ACTOR EMERGENCY!', '#E63946');
         this.clearActor();
       }
+    });
+  }
+
+  /**
+   * Show actor tutorial
+   */
+  showActorTutorial() {
+    const t = this.add.text(this.gameWidth / 2, 420, 'Draw a path to the toilet!\nAvoid the hot set!', {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#9C27B0',
+      backgroundColor: '#2D314288',
+      padding: { x: 10, y: 5 },
+      align: 'center',
+    }).setOrigin(0.5).setDepth(100);
+
+    this.tweens.add({
+      targets: t,
+      alpha: 0,
+      delay: 3000,
+      duration: 500,
+      onComplete: () => t.destroy(),
     });
   }
 
@@ -1033,7 +1202,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     if (!pointer.isDown && this.isDrawingPath) {
-      // Released without reaching toilet - fail if path went through hot set
+      // Released without reaching toilet - check path validity
       this.checkPathValidity();
     }
   }
@@ -1054,8 +1223,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     if (wentThroughHotSet) {
-      this.addStress(15);
-      this.showFloatingText(this.activeActor.x, this.activeActor.y - 25, 'THROUGH THE SHOT!', '#E63946');
+      this.showFloatingText(this.activeActor.x, this.activeActor.y - 25, 'PATH THROUGH SET!', '#E63946');
       this.playSound('fail');
     }
 
@@ -1076,13 +1244,13 @@ export class PlayScene extends Phaser.Scene {
     }
 
     if (wentThroughHotSet) {
-      this.addStress(10);
+      // Reduced points for bad path
       this.addScore(25);
-      this.showFloatingText(this.toilet.x, this.toilet.y - 25, '+25 (BAD PATH)', '#FF9800');
+      this.showFloatingText(this.toilet.x, this.toilet.y - 25, '+25 (bad path)', '#FF9800');
     } else {
+      // Full points for avoiding the set
       this.addScore(75);
       this.coffeeBreakMeter = Math.min(100, this.coffeeBreakMeter + 20);
-      this.reduceStress(5);
       this.showFloatingText(this.toilet.x, this.toilet.y - 25, '+75 PERFECT!', '#4ECDC4');
       this.completeTask();
     }
@@ -1162,8 +1330,8 @@ export class PlayScene extends Phaser.Scene {
     this.levelConfig = this.getLevelConfig(this.level);
 
     // Show level complete message
-    const levelText = this.add.text(this.gameWidth / 2, this.gameHeight / 2 - 20, `DAY ${this.level}!`, {
-      fontSize: '28px',
+    const levelText = this.add.text(this.gameWidth / 2, this.gameHeight / 2 - 40, `DAY ${this.level}!`, {
+      fontSize: '32px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
       fontStyle: 'bold',
@@ -1181,8 +1349,8 @@ export class PlayScene extends Phaser.Scene {
 
     let phraseText = null;
     if (newFeature) {
-      phraseText = this.add.text(this.gameWidth / 2, this.gameHeight / 2 + 15, newFeature, {
-        fontSize: '12px',
+      phraseText = this.add.text(this.gameWidth / 2, this.gameHeight / 2, newFeature, {
+        fontSize: '14px',
         fontFamily: 'monospace',
         color: '#FAF7F2',
       }).setOrigin(0.5).setDepth(100);
@@ -1190,8 +1358,8 @@ export class PlayScene extends Phaser.Scene {
 
     // Show director phrase
     const phrase = DIRECTOR_PHRASES[Math.floor(Math.random() * DIRECTOR_PHRASES.length)];
-    const directorText = this.add.text(this.gameWidth / 2, this.gameHeight / 2 + 35, `"${phrase}"`, {
-      fontSize: '10px',
+    const directorText = this.add.text(this.gameWidth / 2, this.gameHeight / 2 + 30, `"${phrase}"`, {
+      fontSize: '11px',
       fontFamily: 'monospace',
       color: '#8B4513',
       fontStyle: 'italic',
@@ -1201,7 +1369,6 @@ export class PlayScene extends Phaser.Scene {
 
     // Bonus for completing day
     this.addScore(this.level * 50);
-    this.reduceStress(10);
 
     this.time.delayedCall(2500, () => {
       levelText.destroy();
@@ -1338,15 +1505,15 @@ export class PlayScene extends Phaser.Scene {
       const centerX = this.hotSetBounds.centerX;
       const centerY = this.hotSetBounds.centerY;
 
-      if (this.player.x < centerX) {
-        this.player.x = this.hotSetBounds.x - 20;
+      if (this.player.y < centerY) {
+        this.player.y = this.hotSetBounds.y - 20;
       } else {
-        this.player.x = this.hotSetBounds.right + 20;
+        this.player.y = this.hotSetBounds.bottom + 20;
       }
     }
 
     // Clamp to play area (below HUD)
-    this.player.y = Phaser.Math.Clamp(this.player.y, 60, this.gameHeight - 20);
+    this.player.y = Phaser.Math.Clamp(this.player.y, 70, this.gameHeight - 30);
   }
 
   /**
@@ -1398,15 +1565,21 @@ export class PlayScene extends Phaser.Scene {
       // Success!
       this.addScore(50);
       this.coffeeBreakMeter = Math.min(100, this.coffeeBreakMeter + 15);
-      this.reduceStress(5);
       this.showFloatingText(this.player.x, this.player.y - 25, '+50', '#4ECDC4');
       this.playSound('success');
       this.completeTask();
     } else {
-      // Wrong drink!
-      this.addStress(15);
+      // Wrong drink! Counts as missed
+      this.missedCoffees++;
+      this.updateMissedIndicators();
       this.showFloatingText(this.player.x, this.player.y - 25, 'WRONG DRINK!', '#E63946');
       this.playSound('fail');
+
+      // Check for game over
+      if (this.missedCoffees >= 3) {
+        this.gameOver('missed');
+        return;
+      }
     }
 
     // Clear order state
