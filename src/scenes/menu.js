@@ -131,7 +131,7 @@ export class MenuScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(x, startY + lineHeight * 1.5 + 18, 'Tap to stop them BEFORE they hit the set!', {
+    this.add.text(x, startY + lineHeight * 1.5 + 18, 'Tap to stop them BEFORE the live set!', {
       fontSize: '12px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
@@ -145,7 +145,7 @@ export class MenuScene extends Phaser.Scene {
       fontStyle: 'bold',
     }).setOrigin(0.5);
 
-    this.add.text(x, startY + lineHeight * 3 + 18, 'Draw a path to the loo - avoid the set!', {
+    this.add.text(x, startY + lineHeight * 3 + 18, 'Draw a path to the loo - avoid live set!', {
       fontSize: '12px',
       fontFamily: 'monospace',
       color: '#FAF7F2',

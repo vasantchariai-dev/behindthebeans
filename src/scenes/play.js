@@ -253,8 +253,8 @@ export class PlayScene extends Phaser.Scene {
     g.strokeRect(this.hotSetBounds.x, this.hotSetBounds.y,
       this.hotSetBounds.width, this.hotSetBounds.height);
 
-    // "HOT SET" label
-    this.add.text(this.hotSetBounds.centerX, this.hotSetBounds.y + 15, 'HOT SET', {
+    // "LIVE SET" label
+    this.add.text(this.hotSetBounds.centerX, this.hotSetBounds.y + 15, 'LIVE SET', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#E63946',
@@ -347,39 +347,53 @@ export class PlayScene extends Phaser.Scene {
     this.director = this.add.image(60, 100, 'director');
     this.directorZone = new Phaser.Geom.Rectangle(44, 84, 32, 32);
 
-    // 1st AD (top right)
-    this.firstAD = this.add.image(this.gameWidth - 60, 100, 'first-ad');
-    this.firstADZone = new Phaser.Geom.Rectangle(this.gameWidth - 76, 84, 32, 32);
+    // 1st AD (top right) - moved down to avoid HUD overlap
+    this.firstAD = this.add.image(this.gameWidth - 60, 130, 'first-ad');
+    this.firstADZone = new Phaser.Geom.Rectangle(this.gameWidth - 76, 114, 32, 32);
 
     // Speech bubbles (hidden initially)
-    this.directorBubble = this.createSpeechBubble(60, 60);
-    this.adBubble = this.createSpeechBubble(this.gameWidth - 60, 60);
+    // Director bubble above character, AD bubble to the left of character
+    this.directorBubble = this.createSpeechBubble(60, 60, false);
+    this.adBubble = this.createSpeechBubble(this.gameWidth - 120, 130, true);
   }
 
   /**
    * Create a speech bubble container
+   * @param {number} x - X position
+   * @param {number} y - Y position
+   * @param {boolean} pointRight - If true, triangle points right; otherwise points down
    */
-  createSpeechBubble(x, y) {
+  createSpeechBubble(x, y, pointRight = false) {
     const container = this.add.container(x, y);
 
-    // Background
+    // Background - larger for better readability
     const bg = this.add.graphics();
     bg.fillStyle(0xFFFFFF);
-    bg.fillRoundedRect(-55, -22, 110, 36, 6);
-    bg.fillTriangle(-5, 14, 5, 14, 0, 22);
+    bg.fillRoundedRect(-60, -24, 120, 44, 8);
+
+    // Triangle pointer
+    if (pointRight) {
+      // Points to the right (for AD)
+      bg.fillTriangle(60, -5, 60, 5, 72, 0);
+    } else {
+      // Points down (for Director)
+      bg.fillTriangle(-5, 20, 5, 20, 0, 30);
+    }
     container.add(bg);
 
-    // Text
-    const text = this.add.text(0, -6, '', {
-      fontSize: '12px',
+    // Text - BIGGER and BOLDER
+    const text = this.add.text(0, -4, '', {
+      fontSize: '14px',
       fontFamily: 'monospace',
       color: '#1A1A1A',
+      fontStyle: 'bold',
       align: 'center',
     }).setOrigin(0.5);
     container.add(text);
 
-    // Icon placeholder
-    const icon = this.add.image(0, -6, 'cup-flat-white');
+    // Icon placeholder - slightly larger
+    const icon = this.add.image(0, -4, 'cup-flat-white');
+    icon.setScale(0.8);
     icon.setVisible(false);
     container.add(icon);
 
@@ -617,10 +631,9 @@ export class PlayScene extends Phaser.Scene {
       this.firstAD.setTexture('first-ad-shout');
     }
 
-    // Show bubble with order
+    // Show bubble with order - just text, no icon for clarity
     bubble.text.setText(COFFEE_NAMES[orderType]);
-    bubble.icon.setTexture(`cup-${orderType}`);
-    bubble.icon.setVisible(true);
+    bubble.icon.setVisible(false);  // Hide icon, text is clearer
     bubble.setVisible(true);
 
     // Store which person ordered
@@ -683,26 +696,26 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Show drink selection menu - larger cups, vertical layout
+   * Show drink selection menu - larger cups with text labels
    */
   showDrinkMenu() {
     // Create menu container
     const menuX = this.gameWidth / 2;
-    const menuY = this.gameHeight - 180;
+    const menuY = this.gameHeight - 200;
 
     this.drinkMenu = this.add.container(menuX, menuY);
     this.drinkMenu.setDepth(20);
 
-    // Background - wider for larger cups
+    // Background - taller to fit labels
     const bg = this.add.graphics();
     bg.fillStyle(0x333333, 0.95);
-    bg.fillRoundedRect(-160, -50, 320, 100, 10);
+    bg.fillRoundedRect(-170, -55, 340, 130, 10);
     bg.lineStyle(3, 0x4ECDC4);
-    bg.strokeRoundedRect(-160, -50, 320, 100, 10);
+    bg.strokeRoundedRect(-170, -55, 340, 130, 10);
     this.drinkMenu.add(bg);
 
     // Title
-    const title = this.add.text(0, -38, 'CHOOSE THE DRINK', {
+    const title = this.add.text(0, -42, 'CHOOSE THE DRINK', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
@@ -710,28 +723,50 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5);
     this.drinkMenu.add(title);
 
+    // Short labels for drinks
+    const drinkLabels = {
+      'flat-white': 'FLAT\nWHITE',
+      'oat-latte': 'OAT\nLATTE',
+      'black': 'BLACK',
+      'tea': 'TEA',
+    };
+
     // Drink options - larger spacing for bigger cups
     const options = COFFEE_TYPES;
-    const spacing = 75;
-    const startX = -112;
+    const spacing = 80;
+    const startX = -120;
 
     options.forEach((type, i) => {
-      const cup = this.add.image(startX + i * spacing, 15, `cup-${type}`);
-      cup.setInteractive();
+      const cupX = startX + i * spacing;
 
-      // Highlight the correct order
+      // Highlight the correct order FIRST (behind cup)
       if (type === this.currentOrder) {
         const highlight = this.add.graphics();
+        highlight.fillStyle(0x4ECDC4, 0.3);
+        highlight.fillRoundedRect(cupX - 35, -25, 70, 90, 8);
         highlight.lineStyle(3, 0x4ECDC4);
-        highlight.strokeCircle(startX + i * spacing, 15, 30);
+        highlight.strokeRoundedRect(cupX - 35, -25, 70, 90, 8);
         this.drinkMenu.add(highlight);
       }
 
-      cup.on('pointerover', () => cup.setScale(1.2));
+      const cup = this.add.image(cupX, 5, `cup-${type}`);
+      cup.setInteractive();
+
+      cup.on('pointerover', () => cup.setScale(1.15));
       cup.on('pointerout', () => cup.setScale(1));
       cup.on('pointerdown', () => this.selectDrink(type));
 
       this.drinkMenu.add(cup);
+
+      // Label under cup
+      const label = this.add.text(cupX, 48, drinkLabels[type], {
+        fontSize: '10px',
+        fontFamily: 'monospace',
+        color: type === this.currentOrder ? '#4ECDC4' : '#FFFFFF',
+        fontStyle: type === this.currentOrder ? 'bold' : 'normal',
+        align: 'center',
+      }).setOrigin(0.5);
+      this.drinkMenu.add(label);
     });
 
     // Close menu on click elsewhere after a delay
