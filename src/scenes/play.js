@@ -51,6 +51,7 @@ export class PlayScene extends Phaser.Scene {
     this.isTakingBreak = false;
     this.isGameOver = false;
     this.shownCrewTutorial = false; // Track if we've shown crew tutorial
+    this.actorTutorialCount = 0; // Track how many times actor tutorial shown
 
     // Spawn timers
     this.orderTimer = null;
@@ -211,12 +212,12 @@ export class PlayScene extends Phaser.Scene {
     // Floor (starts below HUD area)
     const g = this.add.graphics();
     g.fillStyle(0xFAF7F2);
-    g.fillRect(0, 62, this.gameWidth, this.gameHeight - 62);
+    g.fillRect(0, 68, this.gameWidth, this.gameHeight - 68);
 
     // Add some floor texture
     g.fillStyle(0xE8E8E8, 0.3);
     for (let x = 0; x < this.gameWidth; x += 40) {
-      for (let y = 62; y < this.gameHeight; y += 40) {
+      for (let y = 68; y < this.gameHeight; y += 40) {
         if ((x + y) % 80 === 0) {
           g.fillRect(x, y, 20, 20);
         }
@@ -417,18 +418,31 @@ export class PlayScene extends Phaser.Scene {
     this.firstADZone = new Phaser.Geom.Rectangle(this.gameWidth - 76, 114, 32, 32);
 
     // Speech bubbles (hidden initially)
-    // Director bubble above character, AD bubble to the left of character
-    this.directorBubble = this.createSpeechBubble(60, this.gameHeight - 160, false);
-    this.adBubble = this.createSpeechBubble(this.gameWidth - 120, 130, true);
+    // Director bubble clearly above character head, AD bubble to the left
+    this.directorBubble = this.createSpeechBubble(60, this.gameHeight - 175, 'down');
+    this.adBubble = this.createSpeechBubble(this.gameWidth - 130, 100, 'right');
+
+    // Bin for discarding wrong coffee orders (bottom right, near coffee van)
+    this.bin = this.add.image(this.gameWidth - 40, this.gameHeight - 60, 'bin');
+    this.bin.setInteractive();
+    this.bin.on('pointerdown', () => this.onBinClick());
+
+    // Bin label
+    this.add.text(this.gameWidth - 40, this.gameHeight - 35, 'BIN', {
+      fontSize: '10px',
+      fontFamily: 'monospace',
+      color: '#666666',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
   }
 
   /**
    * Create a speech bubble container
    * @param {number} x - X position
    * @param {number} y - Y position
-   * @param {boolean} pointRight - If true, triangle points right; otherwise points down
+   * @param {string} pointerDir - Direction of pointer: 'down', 'right', or 'none'
    */
-  createSpeechBubble(x, y, pointRight = false) {
+  createSpeechBubble(x, y, pointerDir = 'down') {
     const container = this.add.container(x, y);
 
     // Background - taller to fit text and icon
@@ -437,12 +451,12 @@ export class PlayScene extends Phaser.Scene {
     bg.fillRoundedRect(-60, -28, 120, 56, 8);
 
     // Triangle pointer
-    if (pointRight) {
-      // Points to the right (for AD)
-      bg.fillTriangle(60, -5, 60, 5, 72, 0);
-    } else {
-      // Points down (for Director)
-      bg.fillTriangle(-5, 28, 5, 28, 0, 38);
+    if (pointerDir === 'right') {
+      // Points to the right (for AD) - pointer on right side pointing right
+      bg.fillTriangle(60, -5, 60, 5, 75, 0);
+    } else if (pointerDir === 'down') {
+      // Points down (for Director) - pointer on bottom pointing down
+      bg.fillTriangle(-5, 28, 5, 28, 0, 43);
     }
     container.add(bg);
 
@@ -498,7 +512,7 @@ export class PlayScene extends Phaser.Scene {
     // Dark background for entire HUD area
     const hudBg = this.add.graphics();
     hudBg.fillStyle(0x2D3142);
-    hudBg.fillRect(0, 0, this.gameWidth, 62);
+    hudBg.fillRect(0, 0, this.gameWidth, 68);
 
     // Score (top left)
     this.scoreText = this.add.text(10, hudY, 'SCORE: 0', {
@@ -767,6 +781,32 @@ export class PlayScene extends Phaser.Scene {
     if (this.hasOrder && !this.isCarryingCoffee) {
       this.showDrinkMenu();
     }
+  }
+
+  /**
+   * Handle clicking on the bin to discard coffee
+   */
+  onBinClick() {
+    if (this.isGameOver || this.isTakingBreak) return;
+
+    // Check if carrying coffee
+    if (!this.isCarryingCoffee) return;
+
+    // Check if player is close enough
+    const dist = Phaser.Math.Distance.Between(
+      this.player.x, this.player.y,
+      this.bin.x, this.bin.y
+    );
+
+    if (dist > 80) return; // Too far
+
+    // Discard the coffee
+    this.isCarryingCoffee = false;
+    this.carriedCoffeeType = null;
+    this.player.setTexture('player-idle');
+
+    this.showFloatingText(this.bin.x, this.bin.y - 30, 'BINNED!', '#666666');
+    this.playSound('fail');
   }
 
   /**
@@ -1211,9 +1251,10 @@ export class PlayScene extends Phaser.Scene {
 
     // Show need loo icon - position bubble appropriately based on spawn location
     // If near top of screen, put bubble below; otherwise above
-    const bubbleY = spawn.y < 150 ? spawn.y + 45 : spawn.y - 40;
-    const bubbleX = spawn.x < 60 ? spawn.x + 50 : (spawn.x > this.gameWidth - 60 ? spawn.x - 50 : spawn.x);
-    this.actorBubble = this.createSpeechBubble(bubbleX, bubbleY, spawn.x < 60);
+    const bubbleY = spawn.y < 150 ? spawn.y + 50 : spawn.y - 50;
+    const bubbleX = spawn.x < 60 ? spawn.x + 60 : (spawn.x > this.gameWidth - 60 ? spawn.x - 60 : spawn.x);
+    const pointerDir = spawn.x < 60 ? 'right' : 'down';
+    this.actorBubble = this.createSpeechBubble(bubbleX, bubbleY, pointerDir);
     this.actorBubble.text.setText('Need loo!');
     this.actorBubble.icon.setVisible(false);
     this.actorBubble.setVisible(true);
@@ -1242,6 +1283,10 @@ export class PlayScene extends Phaser.Scene {
    * Show actor tutorial
    */
   showActorTutorial() {
+    // Only show tutorial for first two actor spawns
+    if (this.actorTutorialCount >= 2) return;
+    this.actorTutorialCount++;
+
     const t = this.add.text(this.gameWidth / 2, 500, 'DRAG path to toilet!', {
       fontSize: '13px',
       fontFamily: 'monospace',
@@ -1676,7 +1721,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     // Clamp to play area (below HUD)
-    this.player.y = Phaser.Math.Clamp(this.player.y, 80, this.gameHeight - 30);
+    this.player.y = Phaser.Math.Clamp(this.player.y, 86, this.gameHeight - 30);
   }
 
   /**
