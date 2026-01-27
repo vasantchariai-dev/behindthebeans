@@ -208,15 +208,15 @@ export class PlayScene extends Phaser.Scene {
    * Create background floor
    */
   createBackground() {
-    // Floor
+    // Floor (starts below HUD area)
     const g = this.add.graphics();
     g.fillStyle(0xFAF7F2);
-    g.fillRect(0, 50, this.gameWidth, this.gameHeight - 50);
+    g.fillRect(0, 62, this.gameWidth, this.gameHeight - 62);
 
     // Add some floor texture
     g.fillStyle(0xE8E8E8, 0.3);
     for (let x = 0; x < this.gameWidth; x += 40) {
-      for (let y = 50; y < this.gameHeight; y += 40) {
+      for (let y = 62; y < this.gameHeight; y += 40) {
         if ((x + y) % 80 === 0) {
           g.fillRect(x, y, 20, 20);
         }
@@ -280,56 +280,111 @@ export class PlayScene extends Phaser.Scene {
 
   /**
    * Add film props/equipment inside the hot set for visual interest
+   * Randomly selects 4-5 props from available options
    */
   addFilmProps() {
-    const g = this.add.graphics();
+    // Clear existing props if any
+    if (this.propsGraphics) {
+      this.propsGraphics.destroy();
+    }
+
+    this.propsGraphics = this.add.graphics();
+    const g = this.propsGraphics;
     const setX = this.hotSetBounds.x;
     const setY = this.hotSetBounds.y;
 
-    // Light stand (left side)
-    g.fillStyle(0x333333);
-    g.fillRect(setX + 10, setY + 80, 6, 50);
-    g.fillStyle(0xFFFFCC);
-    g.fillRect(setX + 2, setY + 65, 22, 18);
-    g.fillStyle(0xFFFF99);
-    g.fillRect(setX + 5, setY + 68, 16, 12);
+    // All available props as draw functions
+    const allProps = [
+      // Light stand (left side)
+      () => {
+        g.fillStyle(0x333333);
+        g.fillRect(setX + 10, setY + 80, 6, 50);
+        g.fillStyle(0xFFFFCC);
+        g.fillRect(setX + 2, setY + 65, 22, 18);
+        g.fillStyle(0xFFFF99);
+        g.fillRect(setX + 5, setY + 68, 16, 12);
+      },
+      // Boom mic (top right)
+      () => {
+        g.fillStyle(0x555555);
+        g.fillRect(setX + 150, setY + 30, 40, 4);
+        g.fillStyle(0x888888);
+        g.fillRect(setX + 180, setY + 26, 16, 12);
+      },
+      // C-stand with flag (bottom right)
+      () => {
+        g.fillStyle(0x444444);
+        g.fillRect(setX + 160, setY + 90, 4, 40);
+        g.fillStyle(0x222222);
+        g.fillRect(setX + 155, setY + 85, 30, 20);
+      },
+      // Apple box (center)
+      () => {
+        g.fillStyle(0x8B4513);
+        g.fillRect(setX + 85, setY + 100, 30, 18);
+        g.fillStyle(0xA0522D);
+        g.fillRect(setX + 87, setY + 102, 26, 3);
+      },
+      // Slate/clapperboard (on ground)
+      () => {
+        g.fillStyle(0x1A1A1A);
+        g.fillRect(setX + 120, setY + 110, 25, 20);
+        g.fillStyle(0xFFFFFF);
+        g.fillRect(setX + 122, setY + 118, 21, 10);
+        g.fillStyle(0x1A1A1A);
+        for (let i = 0; i < 4; i++) {
+          g.fillRect(setX + 122 + i * 6, setY + 112, 3, 6);
+        }
+      },
+      // Monitor on stand (right edge)
+      () => {
+        g.fillStyle(0x333333);
+        g.fillRect(setX + 175, setY + 55, 4, 35);
+        g.fillStyle(0x222222);
+        g.fillRect(setX + 165, setY + 45, 24, 16);
+        g.fillStyle(0x4444FF);
+        g.fillRect(setX + 167, setY + 47, 20, 12);
+      },
+      // Dolly track (bottom)
+      () => {
+        g.fillStyle(0x666666);
+        g.fillRect(setX + 40, setY + 125, 80, 6);
+        g.fillStyle(0x888888);
+        g.fillRect(setX + 45, setY + 127, 8, 2);
+        g.fillRect(setX + 105, setY + 127, 8, 2);
+      },
+      // Sandbag (left)
+      () => {
+        g.fillStyle(0x5C4033);
+        g.fillRect(setX + 15, setY + 115, 20, 12);
+        g.fillStyle(0x4A3728);
+        g.fillRect(setX + 17, setY + 117, 16, 3);
+      },
+      // Diffusion frame (top left)
+      () => {
+        g.fillStyle(0x444444);
+        g.fillRect(setX + 50, setY + 25, 3, 40);
+        g.fillStyle(0xFFFFFF, 0.4);
+        g.fillRect(setX + 53, setY + 28, 35, 34);
+        g.lineStyle(1, 0x444444);
+        g.strokeRect(setX + 53, setY + 28, 35, 34);
+      },
+      // Director's chair (right)
+      () => {
+        g.fillStyle(0x8B0000);
+        g.fillRect(setX + 170, setY + 110, 25, 4);
+        g.fillStyle(0x333333);
+        g.fillRect(setX + 172, setY + 114, 3, 16);
+        g.fillRect(setX + 190, setY + 114, 3, 16);
+      },
+    ];
 
-    // Boom mic (top right)
-    g.fillStyle(0x555555);
-    g.fillRect(setX + 150, setY + 30, 40, 4);
-    g.fillStyle(0x888888);
-    g.fillRect(setX + 180, setY + 26, 16, 12);
-
-    // C-stand with flag (bottom right)
-    g.fillStyle(0x444444);
-    g.fillRect(setX + 160, setY + 90, 4, 40);
-    g.fillStyle(0x222222);
-    g.fillRect(setX + 155, setY + 85, 30, 20);
-
-    // Apple box (center)
-    g.fillStyle(0x8B4513);
-    g.fillRect(setX + 85, setY + 100, 30, 18);
-    g.fillStyle(0xA0522D);
-    g.fillRect(setX + 87, setY + 102, 26, 3);
-
-    // Slate/clapperboard (on ground)
-    g.fillStyle(0x1A1A1A);
-    g.fillRect(setX + 120, setY + 110, 25, 20);
-    g.fillStyle(0xFFFFFF);
-    g.fillRect(setX + 122, setY + 118, 21, 10);
-    // Clapper stripes
-    g.fillStyle(0x1A1A1A);
-    for (let i = 0; i < 4; i++) {
-      g.fillRect(setX + 122 + i * 6, setY + 112, 3, 6);
+    // Shuffle and pick 4-5 props
+    const shuffled = allProps.sort(() => Math.random() - 0.5);
+    const numProps = 4 + Math.floor(Math.random() * 2); // 4 or 5
+    for (let i = 0; i < numProps; i++) {
+      shuffled[i]();
     }
-
-    // Monitor on stand (right edge)
-    g.fillStyle(0x333333);
-    g.fillRect(setX + 175, setY + 55, 4, 35);
-    g.fillStyle(0x222222);
-    g.fillRect(setX + 165, setY + 45, 24, 16);
-    g.fillStyle(0x4444FF);
-    g.fillRect(setX + 167, setY + 47, 20, 12);
   }
 
   /**
@@ -439,6 +494,11 @@ export class PlayScene extends Phaser.Scene {
    */
   createHUD() {
     const hudY = 8;
+
+    // Dark background for entire HUD area
+    const hudBg = this.add.graphics();
+    hudBg.fillStyle(0x2D3142);
+    hudBg.fillRect(0, 0, this.gameWidth, 62);
 
     // Score (top left)
     this.scoreText = this.add.text(10, hudY, 'SCORE: 0', {
@@ -1223,13 +1283,9 @@ export class PlayScene extends Phaser.Scene {
     if (this.isDrawingPath && pointer.isDown) {
       this.escortPath.push({ x: pointer.x, y: pointer.y });
 
-      // Draw path
+      // Draw path as footsteps
       this.pathGraphics.clear();
-      this.pathGraphics.lineStyle(4, 0x4ECDC4, 0.6);
-      this.pathGraphics.beginPath();
-      this.pathGraphics.moveTo(this.escortPath[0].x, this.escortPath[0].y);
-      this.escortPath.forEach(p => this.pathGraphics.lineTo(p.x, p.y));
-      this.pathGraphics.strokePath();
+      this.drawFootsteps();
 
       // Check if reached toilet
       const distToToilet = Phaser.Math.Distance.Between(
@@ -1245,6 +1301,57 @@ export class PlayScene extends Phaser.Scene {
     if (!pointer.isDown && this.isDrawingPath) {
       // Released without reaching toilet - check path validity
       this.checkPathValidity();
+    }
+  }
+
+  /**
+   * Draw footsteps along the escort path
+   */
+  drawFootsteps() {
+    if (this.escortPath.length < 2) return;
+
+    const stepSpacing = 18; // Distance between footsteps
+    let distanceAccum = 0;
+    let stepCount = 0;
+
+    for (let i = 1; i < this.escortPath.length; i++) {
+      const prev = this.escortPath[i - 1];
+      const curr = this.escortPath[i];
+      const segmentDist = Phaser.Math.Distance.Between(prev.x, prev.y, curr.x, curr.y);
+
+      if (segmentDist < 0.1) continue; // Skip if points are too close
+
+      distanceAccum += segmentDist;
+
+      // Draw a footstep every stepSpacing pixels
+      while (distanceAccum >= stepSpacing) {
+        distanceAccum -= stepSpacing;
+
+        // Calculate position along the path
+        const ratio = Math.max(0, Math.min(1, 1 - (distanceAccum / segmentDist)));
+        const x = prev.x + (curr.x - prev.x) * ratio;
+        const y = prev.y + (curr.y - prev.y) * ratio;
+
+        // Calculate angle for footstep offset
+        const angle = Phaser.Math.Angle.Between(prev.x, prev.y, curr.x, curr.y);
+
+        // Alternate left/right foot offset perpendicular to path
+        const isLeft = stepCount % 2 === 0;
+        const perpAngle = angle + Math.PI / 2;
+        const offsetX = Math.cos(perpAngle) * (isLeft ? 5 : -5);
+        const offsetY = Math.sin(perpAngle) * (isLeft ? 5 : -5);
+
+        // Draw footprint as small filled circle
+        this.pathGraphics.fillStyle(0x4ECDC4, 0.8);
+        this.pathGraphics.fillCircle(x + offsetX, y + offsetY, 4);
+
+        // Add a smaller toe circle
+        const toeX = x + offsetX + Math.cos(angle) * 4;
+        const toeY = y + offsetY + Math.sin(angle) * 4;
+        this.pathGraphics.fillCircle(toeX, toeY, 2);
+
+        stepCount++;
+      }
     }
   }
 
@@ -1432,6 +1539,9 @@ export class PlayScene extends Phaser.Scene {
       this.levelText.setText(`DAY ${this.level}`);
       this.updateTasksText();
 
+      // Refresh set props for new day
+      this.addFilmProps();
+
       // Update speed
       this.playerSpeed = 150 * this.levelConfig.speed;
 
@@ -1566,7 +1676,7 @@ export class PlayScene extends Phaser.Scene {
     }
 
     // Clamp to play area (below HUD)
-    this.player.y = Phaser.Math.Clamp(this.player.y, 70, this.gameHeight - 30);
+    this.player.y = Phaser.Math.Clamp(this.player.y, 80, this.gameHeight - 30);
   }
 
   /**
