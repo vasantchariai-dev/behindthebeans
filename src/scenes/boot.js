@@ -113,6 +113,7 @@ export class BootScene extends Phaser.Scene {
     this.generateCamera();
     this.generateUISprites();
     this.generateEasterEggSprites();
+    this.generateBin();
   }
 
   /**
@@ -965,6 +966,42 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(C.grey);
     g.fillRect(27, 27, 5, 4);
     g.generateTexture('gravedigger', 34, 32);
+    g.destroy();
+  }
+
+  /**
+   * Bin for discarding wrong coffee orders
+   */
+  generateBin() {
+    const g = this.make.graphics({ x: 0, y: 0, add: false });
+
+    // Bin body (grey metal)
+    g.fillStyle(C.greyDark);
+    g.fillRect(4, 8, 24, 28);
+
+    // Shading
+    g.fillStyle(C.grey);
+    g.fillRect(6, 10, 20, 24);
+
+    // Darker left edge
+    g.fillStyle(0x999999);
+    g.fillRect(4, 8, 4, 28);
+
+    // Lid
+    g.fillStyle(C.greyDark);
+    g.fillRect(2, 4, 28, 6);
+    g.fillStyle(C.grey);
+    g.fillRect(4, 4, 24, 3);
+
+    // Handle on lid
+    g.fillStyle(C.blackLight);
+    g.fillRect(12, 2, 8, 3);
+
+    // "BIN" text area (darker strip)
+    g.fillStyle(0x666666);
+    g.fillRect(6, 18, 20, 10);
+
+    g.generateTexture('bin', 32, 40);
     g.destroy();
   }
 }
