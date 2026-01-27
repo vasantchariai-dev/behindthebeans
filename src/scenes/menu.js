@@ -152,7 +152,7 @@ export class MenuScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     // Controls
-    this.add.text(x, startY + lineHeight * 4.5, 'Move: WASD / Arrows / Tap', {
+    this.add.text(x, startY + lineHeight * 4.5, 'Tap to move (or use arrow keys)', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#4ECDC4',

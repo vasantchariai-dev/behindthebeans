@@ -69,93 +69,93 @@ export class PlayScene extends Phaser.Scene {
 
   /**
    * Get configuration for a given level
-   * ALL 3 TASKS available from day 1, but frequency/intensity ramps up
+   * ALL 3 TASKS available from day 1, MORE HECTIC pacing
    */
   getLevelConfig(level) {
     const configs = {
-      // Day 1: Easy intro - all tasks but very relaxed timing
+      // Day 1: Quick intro but still manageable
       1: {
-        orderInterval: 10000,     // 10 seconds between orders
-        orderTimeout: 18000,      // 18 seconds to deliver
+        orderInterval: 6000,      // 6 seconds between orders
+        orderTimeout: 12000,      // 12 seconds to deliver
         crewEnabled: true,        // All tasks from start
         actorEnabled: true,
-        speed: 0.8,
-        crewSpeed: 10,            // Very slow crew
+        speed: 1.0,
+        crewSpeed: 12,
         maxCrew: 1,
-        crewInterval: 15000,      // Rare crew spawns
-        actorInterval: 25000,     // Rare actor needs
-        caffeineDecay: 0.25,      // Very slow energy drain
+        crewInterval: 8000,       // Crew every 8 seconds
+        actorInterval: 15000,     // Actor every 15 seconds
+        caffeineDecay: 0.4,
         tasksToAdvance: 4,
       },
-      // Day 2: Slightly busier
+      // Day 2: Busier
       2: {
-        orderInterval: 9000,
-        orderTimeout: 16000,
-        crewEnabled: true,
-        actorEnabled: true,
-        speed: 0.85,
-        crewSpeed: 11,
-        maxCrew: 1,
-        crewInterval: 12000,
-        actorInterval: 20000,
-        caffeineDecay: 0.3,
-        tasksToAdvance: 5,
-      },
-      // Day 3: Getting busier
-      3: {
-        orderInterval: 8000,
-        orderTimeout: 14000,
-        crewEnabled: true,
-        actorEnabled: true,
-        speed: 0.9,
-        crewSpeed: 12,
-        maxCrew: 2,
-        crewInterval: 10000,
-        actorInterval: 18000,
-        caffeineDecay: 0.4,
-        tasksToAdvance: 6,
-      },
-      // Day 4: More hectic
-      4: {
-        orderInterval: 7000,
-        orderTimeout: 12000,
-        crewEnabled: true,
-        actorEnabled: true,
-        speed: 0.95,
-        crewSpeed: 14,
-        maxCrew: 2,
-        crewInterval: 8000,
-        actorInterval: 15000,
-        caffeineDecay: 0.5,
-        tasksToAdvance: 7,
-      },
-      // Day 5: Busy day
-      5: {
-        orderInterval: 6000,
+        orderInterval: 5500,
         orderTimeout: 11000,
         crewEnabled: true,
         actorEnabled: true,
-        speed: 1.0,
-        crewSpeed: 16,
+        speed: 1.05,
+        crewSpeed: 14,
         maxCrew: 2,
         crewInterval: 7000,
         actorInterval: 13000,
-        caffeineDecay: 0.6,
-        tasksToAdvance: 8,
+        caffeineDecay: 0.5,
+        tasksToAdvance: 5,
       },
-      // Day 6+: Chaos mode
-      6: {
+      // Day 3: Getting hectic
+      3: {
         orderInterval: 5000,
         orderTimeout: 10000,
         crewEnabled: true,
         actorEnabled: true,
         speed: 1.1,
-        crewSpeed: 18,
-        maxCrew: 3,
+        crewSpeed: 16,
+        maxCrew: 2,
         crewInterval: 6000,
         actorInterval: 11000,
+        caffeineDecay: 0.55,
+        tasksToAdvance: 6,
+      },
+      // Day 4: Hectic
+      4: {
+        orderInterval: 4500,
+        orderTimeout: 9000,
+        crewEnabled: true,
+        actorEnabled: true,
+        speed: 1.15,
+        crewSpeed: 18,
+        maxCrew: 2,
+        crewInterval: 5000,
+        actorInterval: 10000,
+        caffeineDecay: 0.6,
+        tasksToAdvance: 6,
+      },
+      // Day 5: Very hectic
+      5: {
+        orderInterval: 4000,
+        orderTimeout: 8500,
+        crewEnabled: true,
+        actorEnabled: true,
+        speed: 1.2,
+        crewSpeed: 20,
+        maxCrew: 3,
+        crewInterval: 4500,
+        actorInterval: 9000,
         caffeineDecay: 0.7,
-        tasksToAdvance: 9,
+        tasksToAdvance: 7,
+      },
+      // Day 6+: Full chaos
+      6: {
+        orderInterval: 3500,
+        orderTimeout: 8000,
+        crewEnabled: true,
+        actorEnabled: true,
+        speed: 1.25,
+        crewSpeed: 22,
+        maxCrew: 3,
+        crewInterval: 4000,
+        actorInterval: 8000,
+        caffeineDecay: 0.8,
+        tasksToAdvance: 8,
       },
     };
 
@@ -164,13 +164,13 @@ export class PlayScene extends Phaser.Scene {
       const base = configs[6];
       return {
         ...base,
-        orderInterval: Math.max(3500, base.orderInterval - (level - 6) * 150),
-        orderTimeout: Math.max(8000, base.orderTimeout - (level - 6) * 150),
-        speed: Math.min(1.4, base.speed + (level - 6) * 0.04),
-        crewSpeed: Math.min(25, base.crewSpeed + (level - 6) * 1.5),
-        crewInterval: Math.max(4000, base.crewInterval - (level - 6) * 150),
-        actorInterval: Math.max(8000, base.actorInterval - (level - 6) * 300),
-        caffeineDecay: Math.min(1.0, base.caffeineDecay + (level - 6) * 0.05),
+        orderInterval: Math.max(2500, base.orderInterval - (level - 6) * 100),
+        orderTimeout: Math.max(6000, base.orderTimeout - (level - 6) * 100),
+        speed: Math.min(1.5, base.speed + (level - 6) * 0.05),
+        crewSpeed: Math.min(30, base.crewSpeed + (level - 6) * 2),
+        crewInterval: Math.max(3000, base.crewInterval - (level - 6) * 100),
+        actorInterval: Math.max(6000, base.actorInterval - (level - 6) * 200),
+        caffeineDecay: Math.min(1.2, base.caffeineDecay + (level - 6) * 0.1),
         tasksToAdvance: base.tasksToAdvance + (level - 6),
       };
     }
@@ -259,13 +259,17 @@ export class PlayScene extends Phaser.Scene {
     g.strokeRect(this.hotSetBounds.x, this.hotSetBounds.y,
       this.hotSetBounds.width, this.hotSetBounds.height);
 
-    // "LIVE SET" label
+    // "LIVE SET" label with background for visibility
+    const labelBg = this.add.graphics();
+    labelBg.fillStyle(0x000000, 0.5);
+    labelBg.fillRoundedRect(this.hotSetBounds.centerX - 40, this.hotSetBounds.y + 5, 80, 20, 4);
+
     this.add.text(this.hotSetBounds.centerX, this.hotSetBounds.y + 15, 'LIVE SET', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#E63946',
       fontStyle: 'bold',
-    }).setOrigin(0.5).setAlpha(0.8);
+    }).setOrigin(0.5);
 
     // Camera on tripod (main)
     this.add.image(this.hotSetBounds.x + 40, this.hotSetBounds.y + 50, 'camera');
@@ -372,10 +376,10 @@ export class PlayScene extends Phaser.Scene {
   createSpeechBubble(x, y, pointRight = false) {
     const container = this.add.container(x, y);
 
-    // Background - larger for better readability
+    // Background - taller to fit text and icon
     const bg = this.add.graphics();
     bg.fillStyle(0xFFFFFF);
-    bg.fillRoundedRect(-60, -24, 120, 44, 8);
+    bg.fillRoundedRect(-60, -28, 120, 56, 8);
 
     // Triangle pointer
     if (pointRight) {
@@ -383,13 +387,13 @@ export class PlayScene extends Phaser.Scene {
       bg.fillTriangle(60, -5, 60, 5, 72, 0);
     } else {
       // Points down (for Director)
-      bg.fillTriangle(-5, 20, 5, 20, 0, 30);
+      bg.fillTriangle(-5, 28, 5, 28, 0, 38);
     }
     container.add(bg);
 
     // Text - BIGGER and BOLDER
-    const text = this.add.text(0, -4, '', {
-      fontSize: '14px',
+    const text = this.add.text(0, -12, '', {
+      fontSize: '13px',
       fontFamily: 'monospace',
       color: '#1A1A1A',
       fontStyle: 'bold',
@@ -397,9 +401,9 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5);
     container.add(text);
 
-    // Icon placeholder - slightly larger
-    const icon = this.add.image(0, -4, 'cup-flat-white');
-    icon.setScale(0.8);
+    // Icon placeholder - below text
+    const icon = this.add.image(0, 10, 'cup-flat-white');
+    icon.setScale(0.5);
     icon.setVisible(false);
     container.add(icon);
 
@@ -452,9 +456,9 @@ export class PlayScene extends Phaser.Scene {
 
     // Tasks progress
     this.tasksText = this.add.text(10, hudY + 32, '', {
-      fontSize: '10px',
+      fontSize: '11px',
       fontFamily: 'monospace',
-      color: '#E8E8E8',
+      color: '#AAAAAA',
     });
     this.updateTasksText();
 
@@ -637,11 +641,12 @@ export class PlayScene extends Phaser.Scene {
       this.firstAD.setTexture('first-ad-shout');
     }
 
-    // Show bubble with order - text AND icon
+    // Show bubble with order - text AND icon (icon below text)
     bubble.text.setText(COFFEE_NAMES[orderType]);
+    bubble.text.setPosition(0, -12);  // Move text up
     bubble.icon.setTexture(`cup-${orderType}`);
-    bubble.icon.setScale(0.6);
-    bubble.icon.setPosition(45, -4);  // Position icon to the right of text
+    bubble.icon.setScale(0.5);
+    bubble.icon.setPosition(0, 10);  // Position icon below text
     bubble.icon.setVisible(true);
     bubble.setVisible(true);
 
@@ -732,10 +737,10 @@ export class PlayScene extends Phaser.Scene {
     }).setOrigin(0.5);
     this.drinkMenu.add(title);
 
-    // Short labels for drinks
+    // Short labels for drinks (consistent single-line format)
     const drinkLabels = {
-      'flat-white': 'FLAT\nWHITE',
-      'oat-latte': 'OAT\nLATTE',
+      'flat-white': 'FLAT WHITE',
+      'oat-latte': 'OAT LATTE',
       'black': 'BLACK',
       'tea': 'TEA',
     };
@@ -757,9 +762,9 @@ export class PlayScene extends Phaser.Scene {
 
       this.drinkMenu.add(cup);
 
-      // Label under cup
+      // Label under cup (smaller font for longer names)
       const label = this.add.text(cupX, 48, drinkLabels[type], {
-        fontSize: '10px',
+        fontSize: '9px',
         fontFamily: 'monospace',
         color: '#FFFFFF',
         align: 'center',
@@ -938,19 +943,19 @@ export class PlayScene extends Phaser.Scene {
    */
   showCrewTutorial() {
     const tutorialBg = this.add.graphics();
-    tutorialBg.fillStyle(0x000000, 0.8);
-    tutorialBg.fillRoundedRect(this.gameWidth / 2 - 150, 400, 300, 80, 10);
+    tutorialBg.fillStyle(0x000000, 0.85);
+    tutorialBg.fillRoundedRect(this.gameWidth / 2 - 150, 380, 300, 75, 10);
     tutorialBg.setDepth(50);
 
-    const tutorialText = this.add.text(this.gameWidth / 2, 420, '🚫 CREW INCOMING!', {
-      fontSize: '18px',
+    const tutorialText = this.add.text(this.gameWidth / 2, 398, 'CREW INCOMING!', {
+      fontSize: '16px',
       fontFamily: 'monospace',
       color: '#E63946',
       fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(51);
 
-    const tutorialText2 = this.add.text(this.gameWidth / 2, 450, 'TAP them BEFORE they\nreach the live set!', {
-      fontSize: '14px',
+    const tutorialText2 = this.add.text(this.gameWidth / 2, 428, 'TAP them BEFORE the live set!', {
+      fontSize: '13px',
       fontFamily: 'monospace',
       color: '#FAF7F2',
       align: 'center',
@@ -1096,9 +1101,9 @@ export class PlayScene extends Phaser.Scene {
    */
   showTutorial() {
     const texts = [
-      { delay: 500, text: 'Use WASD or tap to move!', y: 450 },
-      { delay: 3000, text: 'When someone shouts, tap the van\nand pick the RIGHT drink!', y: 450 },
-      { delay: 6500, text: 'Deliver to whoever ordered!', y: 450 },
+      { delay: 500, text: 'Tap to move!', y: 500 },
+      { delay: 2500, text: 'Tap van, pick the drink!', y: 500 },
+      { delay: 5000, text: 'Deliver to whoever ordered!', y: 500 },
     ];
 
     texts.forEach(({ delay, text, y }) => {
@@ -1108,15 +1113,16 @@ export class PlayScene extends Phaser.Scene {
           fontSize: '14px',
           fontFamily: 'monospace',
           color: '#4ECDC4',
-          backgroundColor: '#2D314288',
-          padding: { x: 10, y: 5 },
+          backgroundColor: '#2D3142CC',
+          padding: { x: 12, y: 6 },
           align: 'center',
+          fontStyle: 'bold',
         }).setOrigin(0.5).setDepth(100);
 
         this.tweens.add({
           targets: t,
           alpha: 0,
-          delay: 2500,
+          delay: 2000,
           duration: 500,
           onComplete: () => t.destroy(),
         });
@@ -1125,21 +1131,29 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Actor escort mechanics (level 5+)
+   * Actor escort mechanics
    */
   spawnActor() {
     if (this.activeActor || this.isGameOver) return;
     if (!this.levelConfig.actorEnabled) return;
 
-    // Create actor near hot set (left side)
-    const startX = 50;
-    const startY = this.hotSetBounds.centerY;
+    // Random spawn location - different places around the set
+    const spawnLocations = [
+      { x: 30, y: this.hotSetBounds.centerY },           // Left side
+      { x: this.gameWidth - 30, y: this.hotSetBounds.y - 30 },  // Top right
+      { x: 30, y: this.hotSetBounds.bottom + 40 },       // Bottom left
+      { x: this.gameWidth / 2, y: this.hotSetBounds.bottom + 60 }, // Bottom center
+    ];
+    const spawn = spawnLocations[Math.floor(Math.random() * spawnLocations.length)];
 
-    this.activeActor = this.physics.add.image(startX, startY, 'actor-desperate');
+    this.activeActor = this.physics.add.image(spawn.x, spawn.y, 'actor-desperate');
     this.activeActor.setDepth(6);
 
-    // Show need loo icon
-    this.actorBubble = this.createSpeechBubble(startX, startY - 35);
+    // Show need loo icon - position bubble appropriately based on spawn location
+    // If near top of screen, put bubble below; otherwise above
+    const bubbleY = spawn.y < 150 ? spawn.y + 45 : spawn.y - 40;
+    const bubbleX = spawn.x < 60 ? spawn.x + 50 : (spawn.x > this.gameWidth - 60 ? spawn.x - 50 : spawn.x);
+    this.actorBubble = this.createSpeechBubble(bubbleX, bubbleY, spawn.x < 60);
     this.actorBubble.text.setText('Need loo!');
     this.actorBubble.icon.setVisible(false);
     this.actorBubble.setVisible(true);
@@ -1168,19 +1182,20 @@ export class PlayScene extends Phaser.Scene {
    * Show actor tutorial
    */
   showActorTutorial() {
-    const t = this.add.text(this.gameWidth / 2, 420, 'Draw a path to the toilet!\nAvoid the hot set!', {
-      fontSize: '12px',
+    const t = this.add.text(this.gameWidth / 2, 500, 'DRAG path to toilet!', {
+      fontSize: '13px',
       fontFamily: 'monospace',
       color: '#9C27B0',
-      backgroundColor: '#2D314288',
-      padding: { x: 10, y: 5 },
+      backgroundColor: '#2D3142CC',
+      padding: { x: 12, y: 6 },
       align: 'center',
+      fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(100);
 
     this.tweens.add({
       targets: t,
       alpha: 0,
-      delay: 3000,
+      delay: 2500,
       duration: 500,
       onComplete: () => t.destroy(),
     });
@@ -1260,6 +1275,18 @@ export class PlayScene extends Phaser.Scene {
    * Successfully escort actor to toilet
    */
   completeActorEscort() {
+    // Require a minimum path length (must actually draw, not just click)
+    if (this.escortPath.length < 10) {
+      this.showFloatingText(this.activeActor.x, this.activeActor.y - 25, 'DRAG the path!', '#FF9800');
+      // Clear the attempt but keep the actor
+      if (this.pathGraphics) {
+        this.pathGraphics.clear();
+      }
+      this.isDrawingPath = false;
+      this.escortPath = [];
+      return;
+    }
+
     // Check if path went through hot set
     let wentThroughHotSet = false;
     for (const point of this.escortPath) {
