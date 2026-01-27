@@ -55,14 +55,14 @@ export class MenuScene extends Phaser.Scene {
     });
 
     // Credits
-    this.add.text(width / 2, 580, 'A Halfway Up Productions game', {
-      fontSize: '12px',
+    this.add.text(width / 2, 590, 'A Halfway Up Productions game', {
+      fontSize: '10px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, 600, 'halfwayup.co.uk', {
-      fontSize: '11px',
+    this.add.text(width / 2, 610, 'halfwayup.co.uk', {
+      fontSize: '10px',
       fontFamily: 'monospace',
       color: '#E8E8E8',
     }).setOrigin(0.5);
@@ -77,10 +77,32 @@ export class MenuScene extends Phaser.Scene {
       }).setOrigin(1, 0);
     }
 
-    // Input handlers
-    this.input.on('pointerdown', this.startGame, this);
-    this.input.keyboard.on('keydown-SPACE', this.startGame, this);
-    this.input.keyboard.on('keydown-ENTER', this.startGame, this);
+    // High Scores button
+    this.highScoresBtn = this.add.text(width / 2, 555, '[ HIGH SCORES ]', {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#8B4513',
+    }).setOrigin(0.5).setInteractive();
+
+    this.highScoresBtn.on('pointerover', () => this.highScoresBtn.setColor('#EF8354'));
+    this.highScoresBtn.on('pointerout', () => this.highScoresBtn.setColor('#8B4513'));
+    this.highScoresBtn.on('pointerdown', (pointer) => {
+      pointer.event.stopPropagation();
+      this.showLeaderboard();
+    });
+
+    // Input handlers (only if not showing leaderboard)
+    this.input.on('pointerdown', (pointer) => {
+      if (!this.leaderboardContainer) {
+        this.startGame();
+      }
+    });
+    this.input.keyboard.on('keydown-SPACE', () => {
+      if (!this.leaderboardContainer) this.startGame();
+    });
+    this.input.keyboard.on('keydown-ENTER', () => {
+      if (!this.leaderboardContainer) this.startGame();
+    });
 
     // Add some floating coffee beans animation
     this.createFloatingBeans();
@@ -231,6 +253,108 @@ export class MenuScene extends Phaser.Scene {
         ease: 'Sine.easeInOut',
       });
     }
+  }
+
+  /**
+   * Get leaderboard from localStorage
+   */
+  getLeaderboard() {
+    try {
+      const data = localStorage.getItem('behindTheBeans_leaderboard');
+      return data ? JSON.parse(data) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /**
+   * Show leaderboard overlay
+   */
+  showLeaderboard() {
+    if (this.leaderboardContainer) {
+      this.leaderboardContainer.destroy();
+      this.leaderboardContainer = null;
+      return;
+    }
+
+    const { width, height } = this.cameras.main;
+
+    this.leaderboardContainer = this.add.container(width / 2, height / 2);
+    this.leaderboardContainer.setDepth(100);
+
+    // Background
+    const bg = this.add.graphics();
+    bg.fillStyle(0x1A1A1A, 0.95);
+    bg.fillRoundedRect(-150, -220, 300, 440, 15);
+    bg.lineStyle(3, 0x4ECDC4);
+    bg.strokeRoundedRect(-150, -220, 300, 440, 15);
+    this.leaderboardContainer.add(bg);
+
+    // Title
+    const title = this.add.text(0, -190, 'HIGH SCORES', {
+      fontSize: '22px',
+      fontFamily: 'monospace',
+      color: '#EF8354',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+    this.leaderboardContainer.add(title);
+
+    // Header
+    const header = this.add.text(0, -155, 'RANK  NAME   SCORE  DAY', {
+      fontSize: '11px',
+      fontFamily: 'monospace',
+      color: '#4ECDC4',
+    }).setOrigin(0.5);
+    this.leaderboardContainer.add(header);
+
+    // Leaderboard entries
+    const leaderboard = this.getLeaderboard();
+    const startY = -125;
+    const lineHeight = 32;
+
+    if (leaderboard.length === 0) {
+      const noScores = this.add.text(0, 0, 'No scores yet!\n\nPlay the game\nto set a record!', {
+        fontSize: '14px',
+        fontFamily: 'monospace',
+        color: '#FAF7F2',
+        align: 'center',
+      }).setOrigin(0.5);
+      this.leaderboardContainer.add(noScores);
+    } else {
+      leaderboard.forEach((entry, index) => {
+        const y = startY + index * lineHeight;
+        const rank = (index + 1).toString().padStart(2, ' ');
+        const name = entry.name.padEnd(6, ' ');
+        const score = entry.score.toString().padStart(5, ' ');
+        const level = entry.level.toString().padStart(2, ' ');
+
+        // Alternate colors for readability
+        const colour = index % 2 === 0 ? '#FAF7F2' : '#CCCCCC';
+
+        const text = this.add.text(0, y, `${rank}.  ${name} ${score}   ${level}`, {
+          fontSize: '13px',
+          fontFamily: 'monospace',
+          color: colour,
+        }).setOrigin(0.5);
+        this.leaderboardContainer.add(text);
+      });
+    }
+
+    // Close button
+    const closeBtn = this.add.text(0, 185, '[ CLOSE ]', {
+      fontSize: '16px',
+      fontFamily: 'monospace',
+      color: '#4ECDC4',
+    }).setOrigin(0.5).setInteractive();
+
+    closeBtn.on('pointerover', () => closeBtn.setColor('#EF8354'));
+    closeBtn.on('pointerout', () => closeBtn.setColor('#4ECDC4'));
+    closeBtn.on('pointerdown', (pointer) => {
+      pointer.event.stopPropagation();
+      this.leaderboardContainer.destroy();
+      this.leaderboardContainer = null;
+    });
+    this.leaderboardContainer.add(closeBtn);
   }
 
   /**
