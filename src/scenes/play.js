@@ -410,11 +410,6 @@ export class PlayScene extends Phaser.Scene {
       this.gameWidth - 55, 255, 45, 55
     );
 
-    // Gender-inclusive toilet symbol (above toilet)
-    this.add.text(this.gameWidth - 35, 245, '🚽', {
-      fontSize: '18px',
-    }).setOrigin(0.5);
-
     // "WC" label for clarity
     this.add.text(this.gameWidth - 35, 320, 'WC', {
       fontSize: '10px',
@@ -883,13 +878,19 @@ export class PlayScene extends Phaser.Scene {
       const cupX = startX + i * spacing;
 
       const cup = this.add.image(cupX, 5, `cup-${type}`);
-      cup.setInteractive();
+      // Add to container FIRST, then set interactive for proper coordinate handling
+      this.drinkMenu.add(cup);
+
+      // Set interactive with explicit larger hit area (40x50 pixels)
+      cup.setInteractive(
+        new Phaser.Geom.Rectangle(-20, -25, 40, 50),
+        Phaser.Geom.Rectangle.Contains,
+        { useHandCursor: true }
+      );
 
       cup.on('pointerover', () => cup.setScale(1.15));
       cup.on('pointerout', () => cup.setScale(1));
       cup.on('pointerdown', () => this.selectDrink(type));
-
-      this.drinkMenu.add(cup);
 
       // Label under cup (smaller font for longer names)
       const label = this.add.text(cupX, 48, drinkLabels[type], {
@@ -901,16 +902,30 @@ export class PlayScene extends Phaser.Scene {
       this.drinkMenu.add(label);
     });
 
-    // Close menu on click elsewhere after a delay
+    // Close menu on click outside after a delay
     this.time.delayedCall(100, () => {
-      const handler = () => {
-        if (this.drinkMenu) {
+      this.drinkMenuCloseHandler = (pointer) => {
+        if (!this.drinkMenu) {
+          this.input.off('pointerdown', this.drinkMenuCloseHandler);
+          this.drinkMenuCloseHandler = null;
+          return;
+        }
+
+        // Check if click is inside menu area - if so, let cup handlers deal with it
+        const menuX = this.drinkMenu.x;
+        const menuY = this.drinkMenu.y;
+        const inMenu = pointer.x >= menuX - 170 && pointer.x <= menuX + 170 &&
+                       pointer.y >= menuY - 55 && pointer.y <= menuY + 75;
+
+        if (!inMenu) {
+          // Clicked outside menu - close it
           this.drinkMenu.destroy();
           this.drinkMenu = null;
+          this.input.off('pointerdown', this.drinkMenuCloseHandler);
+          this.drinkMenuCloseHandler = null;
         }
-        this.input.off('pointerdown', handler);
       };
-      this.input.on('pointerdown', handler);
+      this.input.on('pointerdown', this.drinkMenuCloseHandler);
     });
   }
 
@@ -918,6 +933,11 @@ export class PlayScene extends Phaser.Scene {
    * Select a drink from the menu
    */
   selectDrink(type) {
+    // Clean up menu and close handler
+    if (this.drinkMenuCloseHandler) {
+      this.input.off('pointerdown', this.drinkMenuCloseHandler);
+      this.drinkMenuCloseHandler = null;
+    }
     if (this.drinkMenu) {
       this.drinkMenu.destroy();
       this.drinkMenu = null;
