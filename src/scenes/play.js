@@ -16,6 +16,7 @@ const COFFEE_NAMES = {
   'tea': 'Tea',
 };
 const CREW_TYPES = ['rigger', 'spark', 'runner-crew'];
+const ACTOR_NAMES = ['ALEX', 'SAM', 'JAMIE', 'RILEY', 'TAYLOR', 'MORGAN', 'CASEY', 'DREW'];
 
 // Director phrases
 const DIRECTOR_PHRASES = [
@@ -409,6 +410,19 @@ export class PlayScene extends Phaser.Scene {
       this.gameWidth - 55, 255, 45, 55
     );
 
+    // Gender-inclusive toilet symbol (above toilet)
+    this.add.text(this.gameWidth - 35, 245, '🚽', {
+      fontSize: '18px',
+    }).setOrigin(0.5);
+
+    // "WC" label for clarity
+    this.add.text(this.gameWidth - 35, 320, 'WC', {
+      fontSize: '10px',
+      fontFamily: 'monospace',
+      color: '#666666',
+      fontStyle: 'bold',
+    }).setOrigin(0.5);
+
     // Director (bottom left, near coffee van for easy delivery)
     this.director = this.add.image(60, this.gameHeight - 120, 'director');
     this.directorZone = new Phaser.Geom.Rectangle(44, this.gameHeight - 136, 32, 32);
@@ -640,9 +654,24 @@ export class PlayScene extends Phaser.Scene {
    * Set up input handlers
    */
   setupInput() {
-    // Click/tap to move
+    // Click/tap to move - but not when interacting with UI
     this.input.on('pointerdown', (pointer) => {
       if (this.isTakingBreak || this.isGameOver) return;
+      if (this.blockPlayerMovement) return;
+
+      // Don't move if pointer is on an interactive game object
+      const hitObjects = this.input.hitTestPointer(pointer);
+      if (hitObjects.length > 0) {
+        // Check if any hit object is interactive (crew, coffee van, bin, etc.)
+        const hasInteractive = hitObjects.some(obj => obj.input && obj.input.enabled);
+        if (hasInteractive) return;
+      }
+
+      // Don't move if drawing actor path
+      if (this.isDrawingPath) return;
+
+      // Don't move if drink menu is open
+      if (this.drinkMenu) return;
 
       // Set move target
       this.moveTarget = new Phaser.Math.Vector2(pointer.x, pointer.y);
@@ -1022,9 +1051,13 @@ export class PlayScene extends Phaser.Scene {
       duration: durationToSet,
       onComplete: () => {
         if (crew.stopped) return;
-        // Mark as entered set (less points now)
+        // Mark as entered set - show "IN THE SHOT!" immediately
         crew.enteredSet = true;
-        // Continue through set
+        if (!crew.isGravedigger) {
+          this.showFloatingText(crew.x, crew.y - 25, 'IN THE SHOT!', '#E63946');
+          this.playSound('fail');
+        }
+        // Continue through set (can still tap them for reduced points)
         this.tweens.add({
           targets: crew,
           y: endY,
@@ -1143,11 +1176,8 @@ export class PlayScene extends Phaser.Scene {
     if (crew.isGravedigger) {
       this.addScore(30);
       this.showFloatingText(crew.x - 30, crew.y - 25, '+30 NICE!', '#4ECDC4');
-    } else {
-      // Regular crew crossed completely - this is bad but not game over
-      this.showFloatingText(crew.x - 30, crew.y - 25, 'IN THE SHOT!', '#E63946');
-      this.playSound('fail');
     }
+    // Note: "IN THE SHOT!" message already shown when they entered
 
     // Remove crew member
     const idx = this.crewMembers.indexOf(crew);
@@ -1246,18 +1276,35 @@ export class PlayScene extends Phaser.Scene {
     ];
     const spawn = spawnLocations[Math.floor(Math.random() * spawnLocations.length)];
 
+    // Give actor a random name
+    const actorName = ACTOR_NAMES[Math.floor(Math.random() * ACTOR_NAMES.length)];
+
     this.activeActor = this.physics.add.image(spawn.x, spawn.y, 'actor-desperate');
     this.activeActor.setDepth(6);
+    this.activeActor.actorName = actorName;
 
-    // Show need loo icon - position bubble appropriately based on spawn location
-    // If near top of screen, put bubble below; otherwise above
-    const bubbleY = spawn.y < 150 ? spawn.y + 50 : spawn.y - 50;
-    const bubbleX = spawn.x < 60 ? spawn.x + 60 : (spawn.x > this.gameWidth - 60 ? spawn.x - 60 : spawn.x);
-    const pointerDir = spawn.x < 60 ? 'right' : 'down';
-    this.actorBubble = this.createSpeechBubble(bubbleX, bubbleY, pointerDir);
-    this.actorBubble.text.setText('Need loo!');
-    this.actorBubble.icon.setVisible(false);
-    this.actorBubble.setVisible(true);
+    // Create name label above actor (more visible than speech bubble)
+    this.actorNameLabel = this.add.text(spawn.x, spawn.y - 28, actorName, {
+      fontSize: '11px',
+      fontFamily: 'monospace',
+      color: '#9C27B0',
+      fontStyle: 'bold',
+      backgroundColor: '#FFFFFFDD',
+      padding: { x: 4, y: 2 },
+    }).setOrigin(0.5).setDepth(7);
+
+    // Toilet icon indicator (pulsing)
+    this.actorIndicator = this.add.text(spawn.x, spawn.y - 45, '🚽', {
+      fontSize: '16px',
+    }).setOrigin(0.5).setDepth(7);
+
+    this.tweens.add({
+      targets: this.actorIndicator,
+      y: spawn.y - 50,
+      duration: 400,
+      yoyo: true,
+      repeat: -1,
+    });
 
     // Show tutorial for actor
     this.showActorTutorial();
@@ -1273,7 +1320,7 @@ export class PlayScene extends Phaser.Scene {
     // Timeout for actor
     this.actorTimeout = this.time.delayedCall(12000, () => {
       if (this.activeActor) {
-        this.showFloatingText(this.activeActor.x, this.activeActor.y - 25, 'ACTOR EMERGENCY!', '#E63946');
+        this.showFloatingText(this.activeActor.x, this.activeActor.y - 25, `${actorName} EMERGENCY!`, '#E63946');
         this.clearActor();
       }
     });
@@ -1287,11 +1334,11 @@ export class PlayScene extends Phaser.Scene {
     if (this.actorTutorialCount >= 2) return;
     this.actorTutorialCount++;
 
-    const t = this.add.text(this.gameWidth / 2, 500, 'DRAG path to toilet!', {
+    const t = this.add.text(this.gameWidth / 2, 500, 'DRAG from actor to 🚽\nAvoid the live set!', {
       fontSize: '13px',
       fontFamily: 'monospace',
       color: '#9C27B0',
-      backgroundColor: '#2D3142CC',
+      backgroundColor: '#2D3142DD',
       padding: { x: 12, y: 6 },
       align: 'center',
       fontStyle: 'bold',
@@ -1300,7 +1347,7 @@ export class PlayScene extends Phaser.Scene {
     this.tweens.add({
       targets: t,
       alpha: 0,
-      delay: 2500,
+      delay: 3000,
       duration: 500,
       onComplete: () => t.destroy(),
     });
@@ -1475,6 +1522,14 @@ export class PlayScene extends Phaser.Scene {
     if (this.actorBubble) {
       this.actorBubble.destroy();
       this.actorBubble = null;
+    }
+    if (this.actorNameLabel) {
+      this.actorNameLabel.destroy();
+      this.actorNameLabel = null;
+    }
+    if (this.actorIndicator) {
+      this.actorIndicator.destroy();
+      this.actorIndicator = null;
     }
     if (this.pathGraphics) {
       this.pathGraphics.destroy();
@@ -1707,16 +1762,35 @@ export class PlayScene extends Phaser.Scene {
       this.player.setVelocity(0, 0);
     }
 
-    // Keep player in bounds (not in hot set unless escorting)
-    if (this.hotSetBounds.contains(this.player.x, this.player.y)) {
-      // Push player out of hot set
-      const centerX = this.hotSetBounds.centerX;
-      const centerY = this.hotSetBounds.centerY;
+    // Keep player out of hot set - smooth collision
+    const padding = 16; // Player half-width
+    const bounds = this.hotSetBounds;
 
-      if (this.player.y < centerY) {
-        this.player.y = this.hotSetBounds.y - 20;
+    // Check if player would enter the set and block movement
+    const wouldEnterX = this.player.x > bounds.x - padding && this.player.x < bounds.right + padding;
+    const wouldEnterY = this.player.y > bounds.y - padding && this.player.y < bounds.bottom + padding;
+
+    if (wouldEnterX && wouldEnterY) {
+      // Determine which edge is closest and push player to that edge
+      const distToTop = Math.abs(this.player.y - (bounds.y - padding));
+      const distToBottom = Math.abs(this.player.y - (bounds.bottom + padding));
+      const distToLeft = Math.abs(this.player.x - (bounds.x - padding));
+      const distToRight = Math.abs(this.player.x - (bounds.right + padding));
+
+      const minDist = Math.min(distToTop, distToBottom, distToLeft, distToRight);
+
+      if (minDist === distToTop) {
+        this.player.y = bounds.y - padding;
+        if (this.player.body.velocity.y > 0) this.player.body.velocity.y = 0;
+      } else if (minDist === distToBottom) {
+        this.player.y = bounds.bottom + padding;
+        if (this.player.body.velocity.y < 0) this.player.body.velocity.y = 0;
+      } else if (minDist === distToLeft) {
+        this.player.x = bounds.x - padding;
+        if (this.player.body.velocity.x > 0) this.player.body.velocity.x = 0;
       } else {
-        this.player.y = this.hotSetBounds.bottom + 20;
+        this.player.x = bounds.right + padding;
+        if (this.player.body.velocity.x < 0) this.player.body.velocity.x = 0;
       }
     }
 
