@@ -837,31 +837,32 @@ export class PlayScene extends Phaser.Scene {
    * Show drink selection menu - larger cups with text labels
    */
   showDrinkMenu() {
-    // Create menu container
+    // Create menu at fixed position
     const menuX = this.gameWidth / 2;
     const menuY = this.gameHeight - 200;
 
-    this.drinkMenu = this.add.container(menuX, menuY);
-    this.drinkMenu.setDepth(20);
+    // Store menu elements for cleanup
+    this.drinkMenuElements = [];
 
-    // Background - taller to fit labels
+    // Background
     const bg = this.add.graphics();
     bg.fillStyle(0x333333, 0.95);
-    bg.fillRoundedRect(-170, -55, 340, 130, 10);
+    bg.fillRoundedRect(menuX - 170, menuY - 55, 340, 130, 10);
     bg.lineStyle(3, 0x4ECDC4);
-    bg.strokeRoundedRect(-170, -55, 340, 130, 10);
-    this.drinkMenu.add(bg);
+    bg.strokeRoundedRect(menuX - 170, menuY - 55, 340, 130, 10);
+    bg.setDepth(20);
+    this.drinkMenuElements.push(bg);
 
     // Title
-    const title = this.add.text(0, -42, 'CHOOSE THE DRINK', {
+    const title = this.add.text(menuX, menuY - 42, 'CHOOSE THE DRINK', {
       fontSize: '14px',
       fontFamily: 'monospace',
       color: '#4ECDC4',
       fontStyle: 'bold',
-    }).setOrigin(0.5);
-    this.drinkMenu.add(title);
+    }).setOrigin(0.5).setDepth(21);
+    this.drinkMenuElements.push(title);
 
-    // Short labels for drinks (consistent single-line format)
+    // Short labels for drinks
     const drinkLabels = {
       'flat-white': 'FLAT WHITE',
       'oat-latte': 'OAT LATTE',
@@ -869,41 +870,39 @@ export class PlayScene extends Phaser.Scene {
       'tea': 'TEA',
     };
 
-    // Drink options - larger spacing for bigger cups
+    // Drink options - positioned absolutely (no container)
     const options = COFFEE_TYPES;
     const spacing = 80;
-    const startX = -120;
+    const startX = menuX - 120;
 
     options.forEach((type, i) => {
       const cupX = startX + i * spacing;
 
-      const cup = this.add.image(cupX, 5, `cup-${type}`);
-      // Add to container FIRST, then set interactive for proper coordinate handling
-      this.drinkMenu.add(cup);
-
-      // Set interactive with explicit larger hit area (40x50 pixels)
-      cup.setInteractive(
-        new Phaser.Geom.Rectangle(-20, -25, 40, 50),
-        Phaser.Geom.Rectangle.Contains,
-        { useHandCursor: true }
-      );
+      const cup = this.add.image(cupX, menuY + 5, `cup-${type}`);
+      cup.setDepth(21);
+      cup.setInteractive({ useHandCursor: true });
 
       cup.on('pointerover', () => cup.setScale(1.15));
       cup.on('pointerout', () => cup.setScale(1));
       cup.on('pointerdown', () => this.selectDrink(type));
 
-      // Label under cup (smaller font for longer names)
-      const label = this.add.text(cupX, 48, drinkLabels[type], {
+      this.drinkMenuElements.push(cup);
+
+      // Label under cup
+      const label = this.add.text(cupX, menuY + 48, drinkLabels[type], {
         fontSize: '9px',
         fontFamily: 'monospace',
         color: '#FFFFFF',
         align: 'center',
-      }).setOrigin(0.5);
-      this.drinkMenu.add(label);
+      }).setOrigin(0.5).setDepth(21);
+      this.drinkMenuElements.push(label);
     });
 
+    // Mark menu as open
+    this.drinkMenu = true;
+
     // Close menu on click outside after a delay
-    this.time.delayedCall(100, () => {
+    this.time.delayedCall(150, () => {
       this.drinkMenuCloseHandler = (pointer) => {
         if (!this.drinkMenu) {
           this.input.off('pointerdown', this.drinkMenuCloseHandler);
@@ -911,18 +910,12 @@ export class PlayScene extends Phaser.Scene {
           return;
         }
 
-        // Check if click is inside menu area - if so, let cup handlers deal with it
-        const menuX = this.drinkMenu.x;
-        const menuY = this.drinkMenu.y;
+        // Check if click is inside menu area
         const inMenu = pointer.x >= menuX - 170 && pointer.x <= menuX + 170 &&
                        pointer.y >= menuY - 55 && pointer.y <= menuY + 75;
 
         if (!inMenu) {
-          // Clicked outside menu - close it
-          this.drinkMenu.destroy();
-          this.drinkMenu = null;
-          this.input.off('pointerdown', this.drinkMenuCloseHandler);
-          this.drinkMenuCloseHandler = null;
+          this.closeDrinkMenu();
         }
       };
       this.input.on('pointerdown', this.drinkMenuCloseHandler);
@@ -930,18 +923,26 @@ export class PlayScene extends Phaser.Scene {
   }
 
   /**
-   * Select a drink from the menu
+   * Close and clean up drink menu
    */
-  selectDrink(type) {
-    // Clean up menu and close handler
+  closeDrinkMenu() {
     if (this.drinkMenuCloseHandler) {
       this.input.off('pointerdown', this.drinkMenuCloseHandler);
       this.drinkMenuCloseHandler = null;
     }
-    if (this.drinkMenu) {
-      this.drinkMenu.destroy();
-      this.drinkMenu = null;
+    if (this.drinkMenuElements) {
+      this.drinkMenuElements.forEach(el => el.destroy());
+      this.drinkMenuElements = null;
     }
+    this.drinkMenu = false;
+  }
+
+  /**
+   * Select a drink from the menu
+   */
+  selectDrink(type) {
+    // Clean up menu
+    this.closeDrinkMenu();
 
     // Pick up the coffee
     this.isCarryingCoffee = true;
@@ -1303,7 +1304,7 @@ export class PlayScene extends Phaser.Scene {
     this.activeActor.setDepth(6);
     this.activeActor.actorName = actorName;
 
-    // Create name label above actor (more visible than speech bubble)
+    // Create name label above actor
     this.actorNameLabel = this.add.text(spawn.x, spawn.y - 28, actorName, {
       fontSize: '11px',
       fontFamily: 'monospace',
@@ -1313,14 +1314,17 @@ export class PlayScene extends Phaser.Scene {
       padding: { x: 4, y: 2 },
     }).setOrigin(0.5).setDepth(7);
 
-    // Toilet icon indicator (pulsing)
-    this.actorIndicator = this.add.text(spawn.x, spawn.y - 45, '🚽', {
-      fontSize: '16px',
+    // "NEED LOO" indicator with pulsing toilet emoji
+    this.actorIndicator = this.add.text(spawn.x, spawn.y - 48, '🚽 NEED LOO!', {
+      fontSize: '12px',
+      fontFamily: 'monospace',
+      color: '#E63946',
+      fontStyle: 'bold',
     }).setOrigin(0.5).setDepth(7);
 
     this.tweens.add({
       targets: this.actorIndicator,
-      y: spawn.y - 50,
+      y: spawn.y - 53,
       duration: 400,
       yoyo: true,
       repeat: -1,
